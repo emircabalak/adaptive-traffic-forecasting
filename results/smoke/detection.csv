@@ -1,0 +1,5 @@
+seed,variant,n_events,detected,mean_delay,median_delay,false_alarms,false_per_day,n_alarms,mean_ttr,recovered,n_updates,mean_update_ms,max_update_ms,n_resets
+0,static,24.0000,6.0000,9.5000,8.0000,51.0000,2.3501,57,14.6250,24,0,0.0000,0.0000,0
+0,ours,24.0000,5.0000,8.2000,7.0000,48.0000,2.2118,53,11.0833,24,53,267.7379,3581.9049,0
+0,reset,24.0000,7.0000,10.7143,10.0000,50.0000,2.3040,57,13.5417,24,57,167.3874,295.5012,57
+0,naive,,,,,,,0,19.9583,24,6849,49.2109,325.8529,0

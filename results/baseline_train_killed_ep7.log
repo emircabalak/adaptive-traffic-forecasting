@@ -1,0 +1,46 @@
+Namespace(device='cuda:0', data='C:\\Users\\emirc\\OneDrive\\Desktop\\Adaptive Data\\data\\METR-LA', adjdata='C:\\Users\\emirc\\OneDrive\\Desktop\\Adaptive Data\\data\\sensor_graph\\adj_mx.pkl', adjtype='doubletransition', gcn_bool=True, aptonly=False, addaptadj=True, randomadj=True, seq_length=12, nhid=32, in_dim=2, num_nodes=207, batch_size=64, learning_rate=0.001, dropout=0.3, weight_decay=0.0001, epochs=100, print_every=100, save='C:\\Users\\emirc\\OneDrive\\Desktop\\Adaptive Data\\checkpoints\\metr', expid=1)
+start training...
+Iter: 000, Train Loss: 11.4452, Train MAPE: 0.2884, Train RMSE: 13.6583
+Iter: 100, Train Loss: 3.6142, Train MAPE: 0.0940, Train RMSE: 7.1030
+Iter: 200, Train Loss: 4.0594, Train MAPE: 0.1095, Train RMSE: 8.1558
+Iter: 300, Train Loss: 3.9034, Train MAPE: 0.1145, Train RMSE: 7.5510
+Epoch: 001, Inference Time: 4.0217 secs
+Epoch: 001, Train Loss: 4.0356, Train MAPE: 0.1140, Train RMSE: 7.7027, Valid Loss: 3.4306, Valid MAPE: 0.0989, Valid RMSE: 6.3294, Training Time: 67.6539/epoch
+Iter: 000, Train Loss: 3.8895, Train MAPE: 0.1206, Train RMSE: 7.4665
+Iter: 100, Train Loss: 4.1211, Train MAPE: 0.1202, Train RMSE: 7.8071
+Iter: 200, Train Loss: 3.5901, Train MAPE: 0.1027, Train RMSE: 7.3749
+Iter: 300, Train Loss: 3.4410, Train MAPE: 0.0883, Train RMSE: 6.8172
+Epoch: 002, Inference Time: 4.1987 secs
+Epoch: 002, Train Loss: 3.5622, Train MAPE: 0.1000, Train RMSE: 7.0523, Valid Loss: 3.2753, Valid MAPE: 0.0905, Valid RMSE: 6.1736, Training Time: 68.3957/epoch
+Iter: 000, Train Loss: 3.2113, Train MAPE: 0.0733, Train RMSE: 6.1857
+Iter: 100, Train Loss: 3.7338, Train MAPE: 0.1077, Train RMSE: 7.5167
+Iter: 200, Train Loss: 3.4492, Train MAPE: 0.0901, Train RMSE: 6.8100
+Iter: 300, Train Loss: 3.5137, Train MAPE: 0.1090, Train RMSE: 7.0845
+Epoch: 003, Inference Time: 4.0908 secs
+Epoch: 003, Train Loss: 3.4783, Train MAPE: 0.0973, Train RMSE: 6.8950, Valid Loss: 3.1731, Valid MAPE: 0.0890, Valid RMSE: 5.9363, Training Time: 68.1235/epoch
+Iter: 000, Train Loss: 3.3195, Train MAPE: 0.0882, Train RMSE: 6.5181
+Iter: 100, Train Loss: 3.3910, Train MAPE: 0.0919, Train RMSE: 6.5853
+Iter: 200, Train Loss: 3.9155, Train MAPE: 0.1149, Train RMSE: 7.4089
+Iter: 300, Train Loss: 3.4121, Train MAPE: 0.0964, Train RMSE: 6.9321
+Epoch: 004, Inference Time: 4.1511 secs
+Epoch: 004, Train Loss: 3.3864, Train MAPE: 0.0943, Train RMSE: 6.7341, Valid Loss: 3.1360, Valid MAPE: 0.0913, Valid RMSE: 5.8953, Training Time: 69.2084/epoch
+Iter: 000, Train Loss: 3.2832, Train MAPE: 0.0884, Train RMSE: 6.5786
+Iter: 100, Train Loss: 3.3220, Train MAPE: 0.0934, Train RMSE: 6.5193
+Iter: 200, Train Loss: 2.9690, Train MAPE: 0.0799, Train RMSE: 6.0349
+Iter: 300, Train Loss: 3.4640, Train MAPE: 0.1016, Train RMSE: 6.9858
+Epoch: 005, Inference Time: 4.2887 secs
+Epoch: 005, Train Loss: 3.3327, Train MAPE: 0.0924, Train RMSE: 6.6141, Valid Loss: 3.1585, Valid MAPE: 0.0921, Valid RMSE: 5.8108, Training Time: 70.2010/epoch
+Iter: 000, Train Loss: 3.3229, Train MAPE: 0.0991, Train RMSE: 6.7333
+Iter: 100, Train Loss: 3.1660, Train MAPE: 0.0783, Train RMSE: 6.2988
+Iter: 200, Train Loss: 3.4012, Train MAPE: 0.0891, Train RMSE: 6.5974
+Iter: 300, Train Loss: 3.1515, Train MAPE: 0.0855, Train RMSE: 6.3229
+Epoch: 006, Inference Time: 4.2529 secs
+Epoch: 006, Train Loss: 3.2769, Train MAPE: 0.0906, Train RMSE: 6.4994, Valid Loss: 3.0247, Valid MAPE: 0.0865, Valid RMSE: 5.6554, Training Time: 71.4999/epoch
+Iter: 000, Train Loss: 3.0120, Train MAPE: 0.0788, Train RMSE: 5.8929
+Iter: 100, Train Loss: 3.0912, Train MAPE: 0.0787, Train RMSE: 6.1366
+Iter: 200, Train Loss: 3.3550, Train MAPE: 0.0945, Train RMSE: 6.5160
+Iter: 300, Train Loss: 3.1181, Train MAPE: 0.0897, Train RMSE: 6.2088
+Epoch: 007, Inference Time: 4.4785 secs
+Epoch: 007, Train Loss: 3.2323, Train MAPE: 0.0890, Train RMSE: 6.4125, Valid Loss: 3.0478, Valid MAPE: 0.0895, Valid RMSE: 5.7925, Training Time: 70.1154/epoch
+Iter: 000, Train Loss: 3.2593, Train MAPE: 0.0875, Train RMSE: 6.3255
+Iter: 100, Train Loss: 3.1993, Train MAPE: 0.0915, Train RMSE: 6.5219

@@ -1,0 +1,8 @@
+data/
+checkpoints/
+garage/
+__pycache__/
+*.pyc
+.venv/
+results/replays/
+results/*.err

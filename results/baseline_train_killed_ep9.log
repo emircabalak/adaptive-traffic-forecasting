@@ -1,0 +1,63 @@
+Namespace(device='cuda:0', data='C:\\Users\\emirc\\OneDrive\\Desktop\\Adaptive Data\\data\\METR-LA', adjdata='C:\\Users\\emirc\\OneDrive\\Desktop\\Adaptive Data\\data\\sensor_graph\\adj_mx.pkl', adjtype='doubletransition', gcn_bool=True, aptonly=False, addaptadj=True, randomadj=True, seq_length=12, nhid=32, in_dim=2, num_nodes=207, batch_size=64, learning_rate=0.001, dropout=0.3, weight_decay=0.0001, epochs=100, print_every=100, save='C:\\Users\\emirc\\OneDrive\\Desktop\\Adaptive Data\\checkpoints\\metr', expid=1)
+start training...
+Iter: 000, Train Loss: 10.9894, Train MAPE: 0.2860, Train RMSE: 13.4155
+Iter: 100, Train Loss: 4.1031, Train MAPE: 0.1276, Train RMSE: 8.0920
+Iter: 200, Train Loss: 4.0548, Train MAPE: 0.1112, Train RMSE: 7.7455
+Iter: 300, Train Loss: 3.6279, Train MAPE: 0.1009, Train RMSE: 7.0259
+Epoch: 001, Inference Time: 3.9857 secs
+Epoch: 001, Train Loss: 4.0054, Train MAPE: 0.1134, Train RMSE: 7.6816, Valid Loss: 3.4386, Valid MAPE: 0.1089, Valid RMSE: 6.4131, Training Time: 70.9930/epoch
+Iter: 000, Train Loss: 3.5449, Train MAPE: 0.0982, Train RMSE: 6.8368
+Iter: 100, Train Loss: 4.0925, Train MAPE: 0.1238, Train RMSE: 7.9852
+Iter: 200, Train Loss: 3.5724, Train MAPE: 0.0972, Train RMSE: 6.9711
+Iter: 300, Train Loss: 3.3454, Train MAPE: 0.0937, Train RMSE: 6.7403
+Epoch: 002, Inference Time: 3.8308 secs
+Epoch: 002, Train Loss: 3.5376, Train MAPE: 0.0989, Train RMSE: 7.0197, Valid Loss: 3.2417, Valid MAPE: 0.0954, Valid RMSE: 6.0154, Training Time: 63.9865/epoch
+Iter: 000, Train Loss: 3.6228, Train MAPE: 0.1033, Train RMSE: 7.1220
+Iter: 100, Train Loss: 3.7255, Train MAPE: 0.1112, Train RMSE: 7.4138
+Iter: 200, Train Loss: 3.3762, Train MAPE: 0.0897, Train RMSE: 6.5452
+Iter: 300, Train Loss: 3.4977, Train MAPE: 0.0992, Train RMSE: 6.8881
+Epoch: 003, Inference Time: 3.8599 secs
+Epoch: 003, Train Loss: 3.4357, Train MAPE: 0.0955, Train RMSE: 6.8085, Valid Loss: 3.2351, Valid MAPE: 0.0856, Valid RMSE: 6.1324, Training Time: 63.2043/epoch
+Iter: 000, Train Loss: 3.1594, Train MAPE: 0.0801, Train RMSE: 6.3430
+Iter: 100, Train Loss: 3.1047, Train MAPE: 0.0789, Train RMSE: 6.1304
+Iter: 200, Train Loss: 3.2117, Train MAPE: 0.0886, Train RMSE: 6.2753
+Iter: 300, Train Loss: 3.2840, Train MAPE: 0.0867, Train RMSE: 6.5621
+Epoch: 004, Inference Time: 3.8597 secs
+Epoch: 004, Train Loss: 3.3674, Train MAPE: 0.0935, Train RMSE: 6.6775, Valid Loss: 3.1936, Valid MAPE: 0.0851, Valid RMSE: 6.0261, Training Time: 63.8857/epoch
+Iter: 000, Train Loss: 3.3039, Train MAPE: 0.0840, Train RMSE: 6.6071
+Iter: 100, Train Loss: 3.1247, Train MAPE: 0.0801, Train RMSE: 6.1041
+Iter: 200, Train Loss: 3.0367, Train MAPE: 0.0794, Train RMSE: 6.0350
+Iter: 300, Train Loss: 3.4570, Train MAPE: 0.0955, Train RMSE: 6.8453
+Epoch: 005, Inference Time: 3.8856 secs
+Epoch: 005, Train Loss: 3.3198, Train MAPE: 0.0919, Train RMSE: 6.5816, Valid Loss: 3.0276, Valid MAPE: 0.0835, Valid RMSE: 5.7270, Training Time: 63.6995/epoch
+Iter: 000, Train Loss: 3.2940, Train MAPE: 0.0901, Train RMSE: 6.5584
+Iter: 100, Train Loss: 3.2188, Train MAPE: 0.0893, Train RMSE: 6.5353
+Iter: 200, Train Loss: 3.4204, Train MAPE: 0.1027, Train RMSE: 6.8701
+Iter: 300, Train Loss: 3.0612, Train MAPE: 0.0836, Train RMSE: 6.1539
+Epoch: 006, Inference Time: 3.8880 secs
+Epoch: 006, Train Loss: 3.2645, Train MAPE: 0.0901, Train RMSE: 6.4758, Valid Loss: 3.0121, Valid MAPE: 0.0884, Valid RMSE: 5.7352, Training Time: 64.4895/epoch
+Iter: 000, Train Loss: 3.5482, Train MAPE: 0.1128, Train RMSE: 7.1182
+Iter: 100, Train Loss: 3.1132, Train MAPE: 0.0809, Train RMSE: 6.1025
+Iter: 200, Train Loss: 2.9312, Train MAPE: 0.0735, Train RMSE: 5.8598
+Iter: 300, Train Loss: 3.3838, Train MAPE: 0.0979, Train RMSE: 6.6587
+Epoch: 007, Inference Time: 4.2402 secs
+Epoch: 007, Train Loss: 3.2250, Train MAPE: 0.0886, Train RMSE: 6.3778, Valid Loss: 2.9770, Valid MAPE: 0.0821, Valid RMSE: 5.5889, Training Time: 67.4448/epoch
+Iter: 000, Train Loss: 3.3624, Train MAPE: 0.0945, Train RMSE: 6.6490
+Iter: 100, Train Loss: 3.2938, Train MAPE: 0.0940, Train RMSE: 6.7497
+Iter: 200, Train Loss: 3.1543, Train MAPE: 0.0909, Train RMSE: 6.4271
+Iter: 300, Train Loss: 3.1412, Train MAPE: 0.0805, Train RMSE: 6.0543
+Epoch: 008, Inference Time: 4.2188 secs
+Epoch: 008, Train Loss: 3.1877, Train MAPE: 0.0874, Train RMSE: 6.3066, Valid Loss: 2.9576, Valid MAPE: 0.0849, Valid RMSE: 5.6175, Training Time: 69.4481/epoch
+Iter: 000, Train Loss: 3.3182, Train MAPE: 0.0966, Train RMSE: 6.5963
+Iter: 100, Train Loss: 2.9307, Train MAPE: 0.0754, Train RMSE: 5.8208
+Iter: 200, Train Loss: 3.2224, Train MAPE: 0.0854, Train RMSE: 6.3274
+Iter: 300, Train Loss: 3.0318, Train MAPE: 0.0817, Train RMSE: 6.0981
+Epoch: 009, Inference Time: 4.2010 secs
+Epoch: 009, Train Loss: 3.1509, Train MAPE: 0.0862, Train RMSE: 6.2462, Valid Loss: 2.9638, Valid MAPE: 0.0810, Valid RMSE: 5.4953, Training Time: 69.6711/epoch
+Iter: 000, Train Loss: 2.9642, Train MAPE: 0.0734, Train RMSE: 5.5166
+Iter: 100, Train Loss: 2.8930, Train MAPE: 0.0699, Train RMSE: 5.4719
+forrtl: error (200): program aborting due to window-CLOSE event
+Image              PC                Routine            Line        Source             
+KERNELBASE.dll     00007FFF21DA652D  Unknown               Unknown  Unknown
+KERNEL32.DLL       00007FFF2320CD87  Unknown               Unknown  Unknown
+ntdll.dll          00007FFF2460CAEC  Unknown               Unknown  Unknown
