@@ -10,13 +10,11 @@ point to. An earlier draft of the spec contained made-up numbers, and none of th
 
 ## Where we left off (update at the end of every session)
 
-2026-10-07, evening. Baseline training resumed with `scripts/train_resumable.py`, epochs 37 to
-100 (about 1 h 15 min). Epochs 1 to 35 came from upstream train.py; epoch 36 was bootstrapped
-from its checkpoint with a fresh Adam state, and everything after resumes from
-`checkpoints/metr_state.pt`.
+2026-10-08. The baseline is trained and reproduces the paper (week 1 done). Next: calibrate the
+detector on the validation period (week 3, last item), then run the experiments.
 
 To continue after a break:
-1. Continue training: run
+1. (Done) Training. If it ever needs rerunning:
    `powershell -ExecutionPolicy Bypass -File scripts\start_training.ps1`. That script does nothing
    if training is running or finished. If training died (shutdown, sleep problem, crash), it
    restarts with `scripts/train_resumable.py`, which continues from the last finished epoch.
@@ -142,10 +140,20 @@ says otherwise.
       sizes, test series reconstruction
 - [x] One-epoch smoke run through `scripts/train_baseline.py`: 66.7 s per training epoch, 4.1 s
       validation, about 1.8 GB VRAM, GPU at 86 C. The pipeline runs end to end.
-- [ ] Full 100-epoch training (about 2 h). The first attempt died after epoch 7 when the
-      session closed; it was restarted at 19:12 as a process detached from the session (WMI). The best checkpoint is saved as
-      `checkpoints/metr_exp1_best_<valloss>.pth`; the log is `results/baseline_train.log`.
-- [ ] Evaluate with our masked metrics, compare with section 1, write the result in the decision log
+- [x] Full 100-epoch training. Best validation loss 2.7359 at epoch 93, saved as
+      `checkpoints/metr_exp1_best_2.74.pth`. Log: `results/baseline_train.log`. Epochs 1 to 35
+      ran in upstream train.py, 36 onwards in train_resumable.py (see decision log).
+- [x] Evaluate with our masked metrics (`scripts/eval_baseline.py`, `results/baseline_eval.csv`):
+
+      | Horizon | MAE (ours / paper) | RMSE (ours / paper) | MAPE % (ours, 5 mph floor / paper) |
+      |---|---|---|---|
+      | 15 min | 2.703 / 2.69 | 5.164 / 5.15 | 6.92 / 6.90 |
+      | 30 min | 3.095 / 3.07 | 6.239 / 6.22 | 8.49 / 8.37 |
+      | 60 min | 3.533 / 3.53 | 7.355 / 7.37 | 10.14 / 10.01 |
+
+      Every MAE is within 0.03 mph of the paper, so the baseline passes. Streaming replay MAE
+      equals the official batch test MAE (2.7028 at 15 min), which confirms the replay engine
+      on the trained model as well.
 
 Commands:
 ```
@@ -268,3 +276,5 @@ Append only, newest last.
   after every epoch. It can also continue from checkpoints left by a train.py run; in that case
   Adam restarts with fresh moments. Tested: bootstrap from a train.py checkpoint, then resume from
   its own state file. `scripts/start_training.ps1` starts or continues training safely.
+- 2026-10-08: Baseline accepted. Test MAE 2.703 / 3.095 / 3.533 at 15 / 30 / 60 min against the
+  paper's 2.69 / 3.07 / 3.53. This checkpoint is the frozen baseline for every experiment.
