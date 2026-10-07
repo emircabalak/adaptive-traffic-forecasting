@@ -10,8 +10,10 @@ point to. An earlier draft of the spec contained made-up numbers, and none of th
 
 ## Where we left off (update at the end of every session)
 
-2026-10-07, 20:25. Baseline training was stopped on purpose after epoch 35 (checkpoint
-`checkpoints/metr_epoch_35_2.77.pth`, validation loss 2.77). Nothing is running now.
+2026-10-07, evening. Baseline training resumed with `scripts/train_resumable.py`, epochs 37 to
+100 (about 1 h 15 min). Epochs 1 to 35 came from upstream train.py; epoch 36 was bootstrapped
+from its checkpoint with a fresh Adam state, and everything after resumes from
+`checkpoints/metr_state.pt`.
 
 To continue after a break:
 1. Continue training: run

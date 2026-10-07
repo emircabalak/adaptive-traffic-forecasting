@@ -14,6 +14,11 @@ import pandas as pd
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
+# Block idle sleep (also behind Win+L) while this process runs. Windows drops the request when
+# the process exits. A closed lid or a manual Sleep still suspends the machine.
+if sys.platform == "win32":
+    import ctypes
+    ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001)  # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
 sys.path.insert(0, str(ROOT / "src"))
 import adapt  # noqa: E402
 import data  # noqa: E402

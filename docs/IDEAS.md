@@ -148,3 +148,8 @@ Append, newest last. Format: date, what we tried, outcome, next step.
   calibrated threshold. Head updates took about 0.2 s on average (max 3.6 s, the first call
   includes CUDA warm-up). Naive full fine-tuning roughly doubled normal-period error, which is
   the forgetting the spec expects.
+- 2026-10-07: Win+L only locks the screen; processes keep running. The idle sleep timer still runs
+  while locked, though: on this laptop it is 2 h on AC and 30 min on battery. train_resumable.py and
+  run_experiments.py now call SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED), which
+  blocks idle sleep while they run without touching power settings. Closing the lid or choosing
+  Sleep still suspends the machine.

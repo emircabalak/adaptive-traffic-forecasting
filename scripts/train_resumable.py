@@ -19,6 +19,11 @@ import time
 from pathlib import Path
 
 os.environ["FOR_DISABLE_CONSOLE_CTRL_HANDLER"] = "1"  # see IDEAS log, forrtl window-CLOSE abort
+# Block idle sleep (also behind Win+L) while this process runs. Windows drops the request when
+# the process exits. A closed lid or a manual Sleep still suspends the machine.
+if sys.platform == "win32":
+    import ctypes
+    ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001)  # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
 ROOT = Path(__file__).resolve().parents[1]
 ap = argparse.ArgumentParser()
 ap.add_argument("--epochs", type=int, default=100)

@@ -211,3 +211,15 @@ Iter: 300, Train Loss: 2.8426, Train MAPE: 0.0782, Train RMSE: 5.8090
 Epoch: 035, Inference Time: 3.8305 secs
 Epoch: 035, Train Loss: 2.8693, Train MAPE: 0.0772, Train RMSE: 5.7398, Valid Loss: 2.7672, Valid MAPE: 0.0789, Valid RMSE: 5.3309, Training Time: 62.7110/epoch
 Iter: 000, Train Loss: 2.9983, Train MAPE: 0.0816, Train RMSE: 6.1383
+bootstrapped from metr_epoch_35_2.77.pth (epoch 35); Adam state starts fresh
+training epochs 36..100
+Iter: 000, Train Loss: 2.8294, Train MAPE: 0.0738, Train RMSE: 5.6400
+Iter: 100, Train Loss: 2.8467, Train MAPE: 0.0801, Train RMSE: 5.6863
+Iter: 200, Train Loss: 2.9059, Train MAPE: 0.0808, Train RMSE: 6.0161
+Iter: 300, Train Loss: 2.7840, Train MAPE: 0.0760, Train RMSE: 5.6342
+Epoch: 036, Inference Time: 4.1000 secs
+Epoch: 036, Train Loss: 2.8671, Train MAPE: 0.0772, Train RMSE: 5.7350, Valid Loss: 2.7710, Valid MAPE: 0.0786, Valid RMSE: 5.3872, Training Time: 67.0868/epoch
+Iter: 000, Train Loss: 2.7666, Train MAPE: 0.0738, Train RMSE: 5.6222
+resumed from C:\Users\emirc\OneDrive\Desktop\Adaptive Data\checkpoints\metr_state.pt after epoch 36
+training epochs 37..100
+Iter: 000, Train Loss: 2.9620, Train MAPE: 0.0803, Train RMSE: 5.9121
