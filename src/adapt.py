@@ -18,7 +18,7 @@ import torch
 import torch.nn.functional as F
 
 import gwn
-from drift import DetectOnly, t1_error
+from drift import DetectOnly
 from replay import SEQ, Static, make_input
 
 

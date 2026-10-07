@@ -30,31 +30,49 @@ import replay  # noqa: E402
 
 DEV = "cuda:0"
 TAIL = 12  # recovery tail after an incident ends, in steps, counted as disrupted
-DET = dict(kind="adwin", delta=0.002)  # ponytail: provisional, calibrate on validation (PLAN week 3)
+
+
+def detector_config():
+    """Detector chosen on the validation period by scripts/calibrate_detector.py."""
+    c = json.loads((ROOT / "results" / "detector.json").read_text())
+    det = {k: v for k, v in c.items() if k not in ("norm", "ckpt") and not k.startswith("val_")}
+    if c["norm"]:
+        z = np.load(ROOT / "results" / "residual_stats.npz")
+        det["norm"] = (z["mu"], z["sd"])
+    return det
 
 
 def variants(model, tod, scaler, band):
+    DET = detector_config()
     return {
         "static": lambda: drift.DetectOnly(**DET),  # (a): never updates, still logs alarms
         "naive": lambda: adapt.NaiveFT(model, tod, scaler, DEV),  # (b)
         "ours": lambda: adapt.HeadAdapt(model, tod, scaler, DEV, beta=1.0, **DET),  # (c)
-        "reset": lambda: adapt.HeadAdapt(model, tod, scaler, DEV, beta=0.0, reset=True, band=band, **DET),
+        "reset": lambda: adapt.HeadAdapt(model, tod, scaler, DEV, beta=0.0, reset=True, band=(*band["det"], 1.0), **DET),
     }
 
 
 def normal_band(ckpt, speed, tod, scaler, cache=ROOT / "results" / "val_band.json"):
-    """Mean/std of the static t+1 network error on the validation period (no incidents)."""
+    """Mean/std of the static t+1 error on the clean validation period, in two scales:
+    'raw' = network mean error in mph (time to recovery), 'det' = the detector's own signal
+    (reset policy). One static replay; both signals are computed from the same forecasts."""
     if cache.exists():
         b = json.loads(cache.read_text())
-        if b["ckpt"] == str(ckpt):
-            return b["mean"], b["std"], 1.0
+        if b.get("ckpt") == str(ckpt) and b.get("det_cfg") == (ROOT / "results" / "detector.json").read_text():
+            return b
     n_train, n_val, _ = data.split_bounds(len(speed))
     v0 = replay.SEQ - 1 + n_train
-    det = drift.DetectOnly(**DET)
-    replay.replay(gwn.build(DEV, ckpt), speed, tod, scaler, v0, v0 + n_val - 1, det, DEV)
-    x = np.array([e for _, e in det.signal if not np.isnan(e)])
-    cache.write_text(json.dumps(dict(ckpt=str(ckpt), mean=float(x.mean()), std=float(x.std()))))
-    return float(x.mean()), float(x.std()), 1.0
+    v1 = v0 + n_val - 1 - replay.SEQ
+    p = replay.replay(gwn.build(DEV, ckpt), speed, tod, scaler, v0, v1, device=DEV)["preds"][:, 0]
+    y = speed[v0 + 1: v1 + 2]
+    err = np.where(y != 0, np.abs(p - y), np.nan)
+    det = detector_config()
+    raw = drift.aggregate(err, "mean")
+    sig = drift.aggregate(err, det.get("agg", "mean"), det.get("norm"), np.arange(v0 + 1, v1 + 2) % drift.STEPS_PER_DAY)
+    b = dict(ckpt=str(ckpt), det_cfg=(ROOT / "results" / "detector.json").read_text(),
+             raw=(float(np.nanmean(raw)), float(np.nanstd(raw))), det=(float(np.nanmean(sig)), float(np.nanstd(sig))))
+    cache.write_text(json.dumps(b))
+    return b
 
 
 def period_masks(events, t0, steps, n_nodes):
@@ -106,7 +124,7 @@ def main():
     t0, t_end = data.test_start(len(speed)), len(speed) - 1 - replay.SEQ
     steps = t_end - t0 + 1
     band = normal_band(ckpt, speed, tod, scaler)
-    print(f"checkpoint {ckpt}; validation t+1 error band mean {band[0]:.3f} std {band[1]:.3f}")
+    print(f"checkpoint {ckpt}; validation band raw {band['raw']}, detector signal {band['det']}")
     (ROOT / "results" / "replays").mkdir(parents=True, exist_ok=True)
 
     mrows, drows = [], []
@@ -127,7 +145,7 @@ def main():
                     m = metrics.masked_metrics(p[:, i], y[:, i], extra_mask=None if mask is None else mask[:, i])
                     mrows.append(dict(seed=seed, variant=name, period=period, horizon=h, **m))
             # t+1 forecasts aligned by target time: row j targets t0 + 1 + j
-            ttr = time_to_recovery(p[:, 0], y[:, 0], events, t0 + 1, band[0], band[1])
+            ttr = time_to_recovery(p[:, 0], y[:, 0], events, t0 + 1, *band["raw"])
             alarms = getattr(policy, "alarms", [])
             st = drift.detection_stats(alarms, events, t0, t_end, TAIL) if hasattr(policy, "alarms") else {}
             upd = getattr(policy, "updates", [])

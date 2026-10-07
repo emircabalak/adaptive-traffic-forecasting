@@ -12,16 +12,32 @@ from replay import Static
 STEPS_PER_DAY = 288
 
 
-def t1_error(labels, agg="mean", topk=5):
-    """Masked absolute t+1 error across sensors, aggregated to one number (nan if no valid data)."""
+def t1_errors(labels):
+    """Per-sensor absolute error of the t+1 forecast released at this step, nan where missing.
+    None if no t+1 label arrived."""
     for s, k, pred, true in labels:
         if k == 0:
-            m = true != 0
-            if not m.any():
-                return np.nan
-            e = np.abs(pred[m] - true[m])
-            return e.mean() if agg == "mean" else np.sort(e)[-topk:].mean()
-    return np.nan
+            return np.where(true != 0, np.abs(pred - true), np.nan)
+    return None
+
+
+def aggregate(err, agg="mean", norm=None, slot=None):
+    """One number from per-sensor errors (last axis). err may be (N,) or (steps, N).
+    norm = (mu, sd), each (288, N): typical error per time-of-day slot and sensor, taken from the
+    training period. With norm, errors become z-scores, so rush hour and noisy sensors stop
+    looking like incidents. agg: "mean", "max" or "topK" (mean of the K largest)."""
+    err = np.asarray(err, float)
+    if norm is not None:
+        mu, sd = norm
+        err = (err - mu[slot]) / sd[slot]
+    with np.errstate(all="ignore"):
+        if agg == "mean":
+            return np.nanmean(err, -1)
+        if agg == "max":
+            return np.nanmax(err, -1)
+        k = int(agg[3:])
+        top = -np.sort(-np.where(np.isnan(err), -np.inf, err), -1)[..., :k]
+        return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
 
 
 def make_detector(kind="adwin", **params):
@@ -35,12 +51,14 @@ def make_detector(kind="adwin", **params):
 class DetectOnly(Static):
     """Feeds the t+1 error to a detector and logs alarms. No model updates."""
 
-    def __init__(self, kind="adwin", agg="mean", **params):
-        self.det, self.agg = make_detector(kind, **params), agg
+    def __init__(self, kind="adwin", agg="mean", norm=None, **params):
+        self.det, self.agg, self.norm = make_detector(kind, **params), agg, norm
         self.signal, self.alarms = [], []
 
     def step(self, now, labels, past):
-        x = t1_error(labels, self.agg)
+        e = t1_errors(labels)
+        # the series starts at 00:00 with no gaps, so the slot of time `now` is now % 288
+        x = np.nan if e is None else float(aggregate(e, self.agg, self.norm, now % STEPS_PER_DAY))
         self.signal.append((now, x))
         if np.isnan(x):
             return False  # all sensors missing at this step: nothing to learn from
@@ -75,8 +93,11 @@ if __name__ == "__main__":
     import pandas as pd
 
     lab = lambda p, t: [(0, 0, np.array(p, float), np.array(t, float))]
-    assert np.isclose(t1_error(lab([50, 10, 3], [60, 0, 1])), 6.0)  # missing sensor ignored
-    assert np.isnan(t1_error(lab([1, 2], [0, 0])))
+    e = t1_errors(lab([50, 10, 3], [60, 0, 1]))
+    assert np.isclose(aggregate(e), 6.0) and np.isclose(aggregate(e, "top1"), 10.0)  # missing ignored
+    assert np.isnan(aggregate(t1_errors(lab([1, 2], [0, 0]))))
+    mu, sd = np.full((288, 3), 2.0), np.full((288, 3), 4.0)
+    assert np.isclose(aggregate(e, "max", (mu, sd), 7), 2.0)  # (10 - 2) / 4
 
     rng = np.random.default_rng(0)
     x = np.abs(rng.normal(2.3, 0.4, 2000))

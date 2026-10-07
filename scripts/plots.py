@@ -68,7 +68,7 @@ def incident(seed, k):
     for a in (a1, a2):
         a.axvspan(df.index[e.onset], df.index[e.end], color="red", alpha=0.08)
     a1.set_ylabel(f"speed, sensor {s} (mph)")
-    a2.set_ylabel("network t+1 error (mph)")
+    a2.set_ylabel("detector signal (see detector.json)")
     a1.legend(frameon=False, ncol=3)
     a2.legend(frameon=False, ncol=4)
     fig.tight_layout()

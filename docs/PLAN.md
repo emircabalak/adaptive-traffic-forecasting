@@ -10,8 +10,10 @@ point to. An earlier draft of the spec contained made-up numbers, and none of th
 
 ## Where we left off (update at the end of every session)
 
-2026-10-08. The baseline is trained and reproduces the paper (week 1 done). Next: calibrate the
-detector on the validation period (week 3, last item), then run the experiments.
+2026-10-08. Baseline done (matches the paper). Detector calibrated on validation. First full
+experiment done (3 seeds x 4 variants, `results/metrics.csv`, `results/detection.csv`). Headline:
+the MVP update rule does not help yet, see IDEAS log of 2026-10-08 for numbers and the diagnosis.
+Next: the decisions listed at the end of that log entry.
 
 To continue after a break:
 1. (Done) Training. If it ever needs rerunning:
@@ -191,7 +193,14 @@ python scripts/train_baseline.py                     # official train.py with pa
       sensors, fed to river's ADWIN and PageHinkley. The detector never sees MAPE.
 - [x] Detection delay (alarm step minus onset step) and false alarms per normal day (alarms outside
       every incident window plus margin, per 288 steps).
-- [ ] Calibrate detector parameters on the validation period only, then freeze them for test.
+- [x] Calibrate detector parameters on the validation period only, then freeze them for test.
+      `scripts/calibrate_detector.py`: 3 validation seeds (100 to 102, 35 incidents), grid over
+      signal (raw or normalised; mean, max, top3/5/10/20) and detector (ADWIN delta, PageHinkley
+      threshold and delta). Rule: highest detection rate with at most 1 false alarm per normal
+      day. Chosen: PageHinkley (threshold 50, delta 0.2) on the top-3 mean of per-sensor
+      z-scored t+1 errors (z from training-period error stats per sensor and 5-minute slot,
+      `results/residual_stats.npz`). Validation: 15 of 35 incidents detected (43 %), mean delay
+      6.9 steps, 0.92 false alarms per day. Saved in `results/detector.json`.
 
 ### Week 4: online adaptation (stage 5)
 - [x] `adapt.py`, our method. On an alarm, take the most recent N windows whose 12-step targets
@@ -204,13 +213,15 @@ python scripts/train_baseline.py                     # official train.py with pa
 - [ ] Guard: the normal-period error of (c) must not go above static (a). If it does, tune beta, lr and K.
 
 ### Week 5: experiments and evaluation
-- [ ] `run_experiments.py` runs variants (a), (b), (c) on every scenario (synthetic seeds, mined
+- [x] `run_experiments.py` runs variants (a), (b), (c) on every scenario (synthetic seeds, mined
       real events, no incident) over identical replays and writes `results/*.csv`.
-- [ ] MAE, RMSE and MAPE at 15, 30 and 60 min, reported separately for normal and disrupted
+- [x] MAE, RMSE and MAPE at 15, 30 and 60 min, reported separately for normal and disrupted
       periods (disrupted means the incident window on affected sensors plus a recovery tail). Also
       time to recovery, detection delay and false alarms per day.
-- [ ] At least 3 seeds, reported as mean and std.
-- [ ] `plots.py`: forecast against actual around incidents, error over time with alarm markers, bar charts.
+- [x] At least 3 seeds, reported as mean and std.
+- [x] `plots.py`: forecast against actual around incidents, error over time with alarm markers, bar charts.
+- [ ] Mined real events as a scenario (needs the mining thresholds tightened first).
+- [ ] Make the update rule actually help (IDEAS log 2026-10-08), then rerun.
 
 ### Week 6: dashboard and report
 - [ ] Streamlit app: choose a scenario, scrub the replay, show forecast against actual for one sensor with alarm markers.
@@ -278,3 +289,6 @@ Append only, newest last.
   its own state file. `scripts/start_training.ps1` starts or continues training safely.
 - 2026-10-08: Baseline accepted. Test MAE 2.703 / 3.095 / 3.533 at 15 / 30 / 60 min against the
   paper's 2.69 / 3.07 / 3.53. This checkpoint is the frozen baseline for every experiment.
+- 2026-10-08: The detector signal is the top-3 mean of per-sensor, per-time-of-day z-scored t+1
+  errors (still the masked t+1 absolute error, only normalised). The raw network mean caught
+  at most 14 % of validation incidents at <= 1 false alarm per day.

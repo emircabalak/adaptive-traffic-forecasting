@@ -153,3 +153,57 @@ Append, newest last. Format: date, what we tried, outcome, next step.
   run_experiments.py now call SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED), which
   blocks idle sleep while they run without touching power settings. Closing the lid or choosing
   Sleep still suspends the machine.
+- 2026-10-08: detector calibration on validation (details in PLAN week 3). Best result: 43 % of
+  synthetic incidents detected at 0.92 false alarms per day. Diagnosis on seed 100: the t+1 error
+  on the blocked sensors is high for only about 3 steps at onset (and 1 to 2 steps when the
+  blockage lifts). After that the model sees the low speeds in its input and its 5-minute
+  forecast follows them, so the t+1 error falls back to about 2 mph. Meanwhile the normal
+  period has heavy tails (99.9th percentile of the top-3 z signal is 35, and incident peaks are
+  about 20 to 37). Some "false alarms" are probably real, unlabelled slowdowns in the data.
+  Consequences and ideas:
+  1. A t+1-only signal caps detection quality. Ablation worth running: aggregate the errors of
+     every forecast whose target is `now` (horizons 1 to 12, issued at now-1 .. now-12). All of
+     them are released at the same moment, so this is still leak free, and forecasts issued
+     before the onset keep missing for up to 12 steps instead of 3. This departs from the
+     spec's t+1 rule, so it needs a team decision before it becomes the default.
+  2. Evaluate false alarms against the mined real slowdowns too: an alarm on a real event
+     shouldn't count as false.
+  3. Because the t+1 forecast recovers by itself, the cost of an incident for the static model
+     is probably at the 30 and 60 minute horizons. The experiments should show where the error
+     actually is before we tune the update rule.
+- 2026-10-08: first full experiment. Test split, 3 seeds (0, 1, 2), about 22 synthetic incidents
+  per seed (5 adjacent sensors at 0.15x for 9 steps, 2-step ramps), detector from
+  results/detector.json, ours = head only with beta 1, lr 1e-3, 5 steps, 6 windows.
+  MAE in mph, mean over seeds (std in brackets):
+
+  | Period, horizon | static | naive | ours | reset |
+  |---|---|---|---|---|
+  | normal 15 min | 2.663 (0.011) | 4.516 (0.414) | 2.692 (0.011) | 2.675 (0.013) |
+  | normal 60 min | 3.438 (0.027) | 6.602 (0.263) | 3.439 (0.027) | 3.441 (0.028) |
+  | disrupted 15 min | 13.248 (0.305) | 14.731 (0.902) | 13.274 (0.311) | 13.517 (0.329) |
+  | disrupted 60 min | 25.040 (0.993) | 30.352 (1.167) | 25.029 (0.994) | 25.030 (1.045) |
+
+  Detection on test: about 11 of 22 incidents per seed, mean delay about 7 steps, about 1.2 false
+  alarms per normal day. Head updates took 0.16 s on average (max 0.28 s).
+
+  What this says:
+  - Naive full fine-tuning forgets, as expected: normal error rises by about 70 % at 15 min.
+  - Ours and reset are within noise of static on disrupted periods, and ours is 0.03 mph worse
+    on normal 15 min, which breaks the "no degradation" constraint (small, but real).
+  - Why ours can't help with this setup: the alarm comes about 7 steps after onset, which is
+    close to the end of a 9-step blockage. The update then teaches the head "speeds are low" just
+    as they recover. The head is a 1x1 convolution shared by all 207 sensors, so it can't make a
+    local correction for 5 sensors without nudging every other sensor too. Disrupted error is
+    dominated by 30 and 60 minute forecasts that cross the onset or the release, and no update
+    made after the alarm can fix forecasts issued before it.
+  - Figure results/fig_incident_seed0_3.png shows this for one incident.
+
+  Decisions to make next (team), roughly in order of expected value:
+  1. Per-node output adapter (section 3, item 2) instead of the shared head. Keeps the update
+     local to the sensors that are wrong, which should fix the normal-period degradation.
+  2. Earlier, stronger detection: the multi-horizon signal from the previous log entry (needs
+     a decision, it changes the spec's t+1 rule), or per-sensor detection (spec stretch goal).
+  3. Longer incidents as an extra scenario (for example 2 h). A 45-minute blockage is barely
+     longer than detection delay plus one update, so there is little time left to benefit.
+  4. Tune beta, lr and K on validation with the normal-period guard. beta = 1 is too weak to keep
+     the normal error flat.
