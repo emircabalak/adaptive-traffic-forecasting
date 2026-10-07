@@ -10,12 +10,11 @@ point to. An earlier draft of the spec contained made-up numbers, and none of th
 
 ## Where we left off (update at the end of every session)
 
-2026-10-07, 20:20. Baseline training is running detached: upstream train.py, launched with
-`pythonw`, at epoch 29 of 100. It keeps running while the laptop is awake, and the Claude
-session doesn't need to be open.
+2026-10-07, 20:25. Baseline training was stopped on purpose after epoch 35 (checkpoint
+`checkpoints/metr_epoch_35_2.77.pth`, validation loss 2.77). Nothing is running now.
 
 To continue after a break:
-1. Check training: look at the end of `results/baseline_train.log`, or run
+1. Continue training: run
    `powershell -ExecutionPolicy Bypass -File scripts\start_training.ps1`. That script does nothing
    if training is running or finished. If training died (shutdown, sleep problem, crash), it
    restarts with `scripts/train_resumable.py`, which continues from the last finished epoch.
