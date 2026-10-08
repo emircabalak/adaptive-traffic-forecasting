@@ -39,6 +39,8 @@ def detector_config():
     if c["norm"]:
         z = np.load(ROOT / "results" / "residual_stats.npz")
         det["norm"] = (z["mu"], z["sd"])
+    if det.get("agg", "").startswith("nbr"):
+        det["nbrs"] = drift.neighbour_index(data.load_adj()[1])
     return det
 
 
@@ -68,7 +70,8 @@ def normal_band(ckpt, speed, tod, scaler, cache=ROOT / "results" / "val_band.jso
     err = np.where(y != 0, np.abs(p - y), np.nan)
     det = detector_config()
     raw = drift.aggregate(err, "mean")
-    sig = drift.aggregate(err, det.get("agg", "mean"), det.get("norm"), np.arange(v0 + 1, v1 + 2) % drift.STEPS_PER_DAY)
+    sig = drift.aggregate(err, det.get("agg", "mean"), det.get("norm"), np.arange(v0 + 1, v1 + 2) % drift.STEPS_PER_DAY,
+                          det.get("nbrs"))
     b = dict(ckpt=str(ckpt), det_cfg=(ROOT / "results" / "detector.json").read_text(),
              raw=(float(np.nanmean(raw)), float(np.nanstd(raw))), det=(float(np.nanmean(sig)), float(np.nanstd(sig))))
     cache.write_text(json.dumps(b))

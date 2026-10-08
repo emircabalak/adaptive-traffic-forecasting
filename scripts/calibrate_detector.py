@@ -90,8 +90,11 @@ def main():
     norm = residual_stats(model, speed, tod, scaler, n_train, ckpt)
     slots = nows % drift.STEPS_PER_DAY
     rows = []
-    for normed, how in [(n, h) for n in (False, True) for h in ["mean", "max", "top3", "top5", "top10", "top20"]]:
-        sig = {seed: drift.aggregate(err, how, norm if normed else None, slots) for seed, _, err in scen}
+    nbrs = drift.neighbour_index(adj)
+    combos = [(n, h) for n in (False, True) for h in ["mean", "max", "top3", "top5", "top10", "top20"]]
+    combos += [(True, h) for h in ["nbrmax", "nbrtop3"]]  # neighbour-confirmed z (EXPERIMENTS E5)
+    for normed, how in combos:
+        sig = {seed: drift.aggregate(err, how, norm if normed else None, slots, nbrs) for seed, _, err in scen}
         for kind, params in GRID:
             stats = []
             for seed, ev, _ in scen:

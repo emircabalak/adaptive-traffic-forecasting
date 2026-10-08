@@ -58,7 +58,10 @@ def replay(model, speed, tod, scaler, t_start, t_end, policy=None, device="cuda:
         policy.step(now, labels, speed[: now + 1])
         t1 = time.perf_counter()
         with torch.no_grad():
-            out = forecast(model, make_input(speed, tod, now, scaler).to(device))
+            x = make_input(speed, tod, now, scaler).to(device)
+            out = forecast(model, x)
+            if hasattr(policy, "adjust"):  # output adapters (adapt.NodeAdapt)
+                out = policy.adjust(out[None], x)[0]
         preds[i] = out.cpu().numpy() * std + mean
         for k in range(SEQ):
             pending[now + 1 + k].append((now, k))

@@ -99,6 +99,88 @@ class HeadAdapt(DetectOnly):
         self.updates.append((now, time.perf_counter() - t0, loss.item()))
 
 
+def last_valid(x, scaler):
+    """Most recent non-missing normalised input speed per window and sensor, (B, N), and a mask
+    of where one exists. Missing readings are 0 mph, which normalise to -mean/std."""
+    z0 = -scaler[0] / scaler[1]
+    sp = x[:, 0]  # (B, N, 12)
+    ok = (sp - z0).abs() > 1e-6
+    idx = torch.where(ok, torch.arange(sp.shape[-1], device=sp.device), -1).amax(-1)  # last valid step
+    last = sp.gather(-1, idx.clamp(min=0)[..., None])[..., 0]
+    return last, idx >= 0
+
+
+class NodeAdapt(DetectOnly):
+    """Per-sensor output adapter, trained on alarm. Graph WaveNet itself stays frozen.
+    y' = y + alpha_v * (last_v - y) + b_v in normalised units; alpha = b = 0 is the static model.
+    per_horizon=True gives each horizon its own alpha and b, shape (12, N)."""
+
+    def __init__(self, model, tod, scaler, device="cuda:0", steps=20, lr=0.05, beta=0.01,
+                 huber_delta=1.0, n_windows=6, decay=1.0, per_horizon=False, max_horizon=SEQ, local_z=None,
+                 active_steps=0, band=None, kind="adwin", agg="mean", **det_params):
+        super().__init__(kind, agg, **det_params)
+        # local_z: train only sensors whose recent (neighbour-confirmed) z exceeded it, plus neighbours.
+        # active_steps: after an alarm, keep updating every step for this many steps (no decay meanwhile).
+        self.local_z, self.active_steps, self.active_until = local_z, active_steps, -1
+        self.model, self.tod, self.scaler, self.device = model, tod, scaler, device
+        self.steps, self.lr, self.beta, self.delta = steps, lr, beta, huber_delta
+        self.n_windows, self.decay = n_windows, decay
+        self.hmask = (torch.arange(SEQ, device=device) < max_horizon).float()[:, None]  # (12, 1)
+        for p in model.parameters():
+            p.requires_grad_(False)
+        shape = (SEQ, model.nodevec1.shape[0]) if per_horizon else (model.nodevec1.shape[0],)
+        self.alpha = torch.zeros(shape, device=device, requires_grad=True)
+        self.b = torch.zeros(shape, device=device, requires_grad=True)
+        self.updates = []
+
+    def _apply(self, base, x):
+        last, ok = last_valid(x, self.scaler)
+        pull = torch.where(ok[:, None, :], last[:, None, :] - base, torch.zeros_like(base))
+        return base + self.hmask * (self.alpha * pull + self.b)
+
+    def adjust(self, out, x):
+        return self._apply(out, x)
+
+    def step(self, now, labels, past):
+        if super().step(now, labels, past):
+            self.active_until = now + self.active_steps
+            self.update(now, past)
+        elif now <= self.active_until:
+            self.update(now, past)
+        elif self.decay < 1:
+            with torch.no_grad():
+                self.alpha.mul_(self.decay)
+                self.b.mul_(self.decay)
+
+    def sensor_mask(self):
+        """(N,) 1/0 mask of sensors to train, or None for all."""
+        if self.local_z is None or not self.recent:
+            return None
+        hot = np.max(np.nan_to_num(np.stack(self.recent), nan=-np.inf), 0) > self.local_z
+        if self.nbrs is not None:
+            nb = self.nbrs[hot].ravel()
+            hot[nb[nb < len(hot)]] = True
+        return torch.tensor(hot, dtype=torch.float32, device=self.device)
+
+    def update(self, now, past):
+        t0 = time.perf_counter()
+        x, y = window_batch(past, self.tod, self.scaler, range(now - self.n_windows, now), self.device)
+        with torch.no_grad():
+            base = predict_norm(self.model, x)
+        smask = self.sensor_mask()
+        opt = torch.optim.Adam([self.alpha, self.b], lr=self.lr)
+        for _ in range(self.steps):
+            opt.zero_grad()
+            yh = y * self.hmask  # horizons past max_horizon count as missing
+            if smask is not None:
+                yh = yh * smask  # sensors outside the flagged area count as missing too
+            loss = masked_huber(self._apply(base, x), yh, self.scaler, self.delta)
+            loss = loss + self.beta * ((self.alpha ** 2).sum() + (self.b ** 2).sum())
+            loss.backward()
+            opt.step()
+        self.updates.append((now, time.perf_counter() - t0, loss.item()))
+
+
 class NaiveFT(Static):
     """Variant (b): every step, one Adam step on all weights using the windows whose
     targets became (partly) known, no anchor, no gating."""
@@ -123,6 +205,14 @@ class NaiveFT(Static):
         torch.nn.utils.clip_grad_norm_(self.params, self.clip)
         self.opt.step()
         self.updates.append((now, time.perf_counter() - t0, loss.item()))
+
+
+# name -> factory(model, tod, scaler, device, band=..., **detector and policy kwargs)
+POLICIES = {
+    "static": lambda model, tod, scaler, device, band=None, **det: DetectOnly(**det),
+    "head": HeadAdapt,
+    "node": NodeAdapt,
+}
 
 
 if __name__ == "__main__":

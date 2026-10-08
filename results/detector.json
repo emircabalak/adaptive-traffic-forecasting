@@ -1,11 +1,11 @@
 {
   "norm": true,
-  "agg": "top3",
+  "agg": "nbrtop3",
   "kind": "ph",
-  "threshold": 50,
+  "threshold": 30,
   "delta": 0.2,
-  "val_rate": 0.42857142857142855,
-  "val_delay": 6.933333333333334,
-  "val_false_per_day": 0.9224500475708172,
+  "val_rate": 0.5428571428571428,
+  "val_delay": 3.736842105263158,
+  "val_false_per_day": 0.7998334253629539,
   "ckpt": "C:\\Users\\emirc\\OneDrive\\Desktop\\Adaptive Data\\checkpoints\\metr_exp1_best_2.74.pth"
 }

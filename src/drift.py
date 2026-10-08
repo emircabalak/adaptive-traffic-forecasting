@@ -4,6 +4,8 @@ The signal is built from the labels released at `now` by the replay buffer, usin
 horizon-1 forecast (issued at now-1), because it is the first label to arrive. MAPE is never
 used here: it explodes on missing zeros and near-zero speeds.
 """
+from collections import deque
+
 import numpy as np
 from river import drift
 
@@ -21,15 +23,40 @@ def t1_errors(labels):
     return None
 
 
-def aggregate(err, agg="mean", norm=None, slot=None):
+def neighbour_index(adj):
+    """(N, max_degree) neighbour indices from the adjacency (either direction), padded with N."""
+    a = (adj > 0) | (adj.T > 0)
+    np.fill_diagonal(a, False)
+    nb = [np.flatnonzero(r) for r in a]
+    out = np.full((len(nb), max(map(len, nb))), len(nb))
+    for i, r in enumerate(nb):
+        out[i, : len(r)] = r
+    return out
+
+
+def confirmed(z, nbrs):
+    """Per-sensor score that needs a neighbour to agree: min(z_v, max over neighbours z_u).
+    A single noisy sensor scores low; an incident spanning adjacent sensors scores high."""
+    pad = np.concatenate([z, np.full(z.shape[:-1] + (1,), -np.inf)], -1)  # index N = padding
+    with np.errstate(all="ignore"):
+        nmax = np.nanmax(np.where(np.isnan(pad[..., nbrs]), -np.inf, pad[..., nbrs]), -1)
+    return np.minimum(z, nmax)
+
+
+def aggregate(err, agg="mean", norm=None, slot=None, nbrs=None):
     """One number from per-sensor errors (last axis). err may be (N,) or (steps, N).
     norm = (mu, sd), each (288, N): typical error per time-of-day slot and sensor, taken from the
     training period. With norm, errors become z-scores, so rush hour and noisy sensors stop
-    looking like incidents. agg: "mean", "max" or "topK" (mean of the K largest)."""
+    looking like incidents. agg: "mean", "max" or "topK" (mean of the K largest); a "nbr"
+    prefix ("nbrmax", "nbrtop3") first replaces each sensor's value with confirmed(z, nbrs)."""
     err = np.asarray(err, float)
     if norm is not None:
         mu, sd = norm
         err = (err - mu[slot]) / sd[slot]
+    if agg.startswith("nbr"):
+        err = confirmed(err, nbrs)
+        err = np.where(np.isinf(err), np.nan, err)
+        agg = agg[3:]
     with np.errstate(all="ignore"):
         if agg == "mean":
             return np.nanmean(err, -1)
@@ -51,15 +78,25 @@ def make_detector(kind="adwin", **params):
 class DetectOnly(Static):
     """Feeds the t+1 error to a detector and logs alarms. No model updates."""
 
-    def __init__(self, kind="adwin", agg="mean", norm=None, **params):
-        self.det, self.agg, self.norm = make_detector(kind, **params), agg, norm
+    def __init__(self, kind="adwin", agg="mean", norm=None, oracle=None, nbrs=None, **params):
+        self.det, self.agg, self.norm, self.nbrs = make_detector(kind, **params), agg, norm, nbrs
+        self.oracle = None if oracle is None else set(oracle)  # diagnostics only: fixed alarm times
         self.signal, self.alarms = [], []
+        self.recent = deque(maxlen=6)  # last per-sensor scores, used by local adaptation
 
     def step(self, now, labels, past):
         e = t1_errors(labels)
         # the series starts at 00:00 with no gaps, so the slot of time `now` is now % 288
-        x = np.nan if e is None else float(aggregate(e, self.agg, self.norm, now % STEPS_PER_DAY))
+        x = np.nan if e is None else float(aggregate(e, self.agg, self.norm, now % STEPS_PER_DAY, self.nbrs))
         self.signal.append((now, x))
+        if e is not None and self.norm is not None:
+            z = (e - self.norm[0][now % STEPS_PER_DAY]) / self.norm[1][now % STEPS_PER_DAY]
+            self.recent.append(confirmed(z, self.nbrs) if self.nbrs is not None else z)
+        if self.oracle is not None:
+            if now in self.oracle:
+                self.alarms.append(now)
+                return True
+            return False
         if np.isnan(x):
             return False  # all sensors missing at this step: nothing to learn from
         self.det.update(float(x))
@@ -98,6 +135,10 @@ if __name__ == "__main__":
     assert np.isnan(aggregate(t1_errors(lab([1, 2], [0, 0]))))
     mu, sd = np.full((288, 3), 2.0), np.full((288, 3), 4.0)
     assert np.isclose(aggregate(e, "max", (mu, sd), 7), 2.0)  # (10 - 2) / 4
+    nb = neighbour_index(np.array([[0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0.]]))
+    z = np.array([9.0, 8.0, 7.0, 1.0])  # 0-1 agree, 2 has only a quiet neighbour
+    assert np.allclose(confirmed(z, nb), [8, 8, 1, 1])
+    assert np.isclose(aggregate(z, "nbrmax", nbrs=nb), 8.0)
 
     rng = np.random.default_rng(0)
     x = np.abs(rng.normal(2.3, 0.4, 2000))
