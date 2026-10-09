@@ -43,3 +43,9 @@
 {"name":"E14-thr20","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":20}}
 {"name":"E14-gate0.25","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":8},"gate":0.25}
 {"name":"E14-gate0.4","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":8},"gate":0.4}
+{"name":"E15-thr20-gate0.25","dur":9,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":20},"gate":0.25}
+{"name":"E15-thr16","dur":9,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":16}}
+{"name":"E15-thr16-gate0.25","dur":9,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":16},"gate":0.25}
+{"name":"E15-thr20-gate0.25","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":20},"gate":0.25}
+{"name":"E15-thr16","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":16}}
+{"name":"E15-thr16-gate0.25","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":16},"gate":0.25}

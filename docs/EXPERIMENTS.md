@@ -267,6 +267,26 @@ already right again (evidence gate) should bring norm15 delta under 0.005 while 
 the gain.
 Change: base active 12 + local_z 3 (E13). (a) threshold 12 and 20; (b) threshold 8 with
 `gate` 0.25 and 0.4 (normalised units, about 5 and 8 mph). Each at dur 9 and 24.
+Outcome (E12 active 6 for reference: +0.220 / +0.184, delta +0.0035 / +0.0038):
+
+| config | dur 9 gain | dur 24 gain | norm15 delta (9 / 24) | false alarms a day |
+|---|---|---|---|---|
+| threshold 12 | +0.297 | +0.583 | +0.0092 / +0.0092 | 3.0 |
+| threshold 20 | +0.209 | +0.416 | +0.0048 / +0.0045 | 1.7 |
+| threshold 8, gate 0.25 | +0.202 | +0.229 | +0.0043 / +0.0047 | 3.8 |
+| threshold 8, gate 0.4 | +0.181 | +0.183 | +0.0040 / +0.0045 | 3.8 |
+
+Threshold 20 matches E12 on 45-minute incidents (-0.011, within run-to-run noise) and more than
+doubles the gain on 2 h incidents. It passes the constraint, but with little margin. The gate
+does what it should (constraint passes at threshold 8) but gives up too much gain.
+Candidate kept: active 12 + local_z 3 + threshold 20 ("E14-thr20").
+
+### E15: more margin on the normal period
+Hypothesis: adding the gate to threshold 20 lowers norm15 delta (fewer post-false-alarm updates)
+at a small cost; threshold 16 sits between 12 (too many false alarms) and 20.
+Change: base E14-thr20. (a) + gate 0.25; (b) threshold 16; (c) threshold 16 + gate 0.25.
+Each at dur 9 and 24.
+After E15 the finalists go to the test set.
 Outcome: pending.
 
 
