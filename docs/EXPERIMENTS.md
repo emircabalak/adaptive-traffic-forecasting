@@ -244,6 +244,29 @@ false alarm's effect to a few sensors, so active 12 can pass the constraint. A m
 (active 9) or a slightly stronger anchor (beta 0.005 with active 6) are the simpler alternatives.
 Change: on top of E12 active: active 12 + local_z 3; active 12 + local_z 5; active 9;
 active 6 + beta 0.005. Each at dur 9 and 24.
+Correction: the default beta is 0.01, so beta 0.005 is a weaker anchor, not a stronger one as
+written above. The result is read accordingly.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | norm15 delta (9 / 24) |
+|---|---|---|---|
+| active 12 + local_z 3 | +0.335 | +0.572 | +0.0102 / +0.0107 |
+| active 12 + local_z 5 | +0.347 | +0.553 | +0.0116 / +0.0115 |
+| active 9 | +0.177 | +0.258 | +0.0047 / +0.0052 |
+| active 6 + beta 0.005 | +0.369 | +0.303 | +0.0087 / +0.0091 |
+
+Everything stronger than E12 active 6 breaks the constraint. Local training makes each flagged
+sensor's correction larger (the loss is averaged over fewer sensors), which helps real
+incidents and hurts after false alarms. There is a clear trade-off between correction strength
+and false-alarm damage, and the constraint is what binds. Nothing kept; E12 active 6 stays best.
+
+### E14: strong local correction, less false-alarm damage
+Hypothesis: the strong E13 settings fail only through false alarms (about 3.5 a day). Either
+fewer false alarms (higher threshold) or stopping the active phase when the frozen model is
+already right again (evidence gate) should bring norm15 delta under 0.005 while keeping most of
+the gain.
+Change: base active 12 + local_z 3 (E13). (a) threshold 12 and 20; (b) threshold 8 with
+`gate` 0.25 and 0.4 (normalised units, about 5 and 8 mph). Each at dur 9 and 24.
 Outcome: pending.
 
 

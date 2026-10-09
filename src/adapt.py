@@ -117,11 +117,14 @@ class NodeAdapt(DetectOnly):
 
     def __init__(self, model, tod, scaler, device="cuda:0", steps=20, lr=0.05, beta=0.01,
                  huber_delta=1.0, n_windows=6, decay=1.0, per_horizon=False, max_horizon=SEQ, local_z=None,
-                 active_steps=0, band=None, kind="adwin", agg="mean", **det_params):
+                 active_steps=0, gate=None, band=None, kind="adwin", agg="mean", **det_params):
         super().__init__(kind, agg, **det_params)
         # local_z: train only sensors whose recent (neighbour-confirmed) z exceeded it, plus neighbours.
         # active_steps: after an alarm, keep updating every step for this many steps (no decay meanwhile).
         self.local_z, self.active_steps, self.active_until = local_z, active_steps, -1
+        # gate: during the active phase, only update while the frozen model's mean absolute error
+        # (normalised units) on the trained sensors' known targets is at least this large.
+        self.gate = gate
         self.model, self.tod, self.scaler, self.device = model, tod, scaler, device
         self.steps, self.lr, self.beta, self.delta = steps, lr, beta, huber_delta
         self.n_windows, self.decay = n_windows, decay
@@ -146,7 +149,7 @@ class NodeAdapt(DetectOnly):
             self.active_until = now + self.active_steps
             self.update(now, past)
         elif now <= self.active_until:
-            self.update(now, past)
+            self.update(now, past, gated=True)
         elif self.decay < 1:
             with torch.no_grad():
                 self.alpha.mul_(self.decay)
@@ -162,12 +165,18 @@ class NodeAdapt(DetectOnly):
             hot[nb[nb < len(hot)]] = True
         return torch.tensor(hot, dtype=torch.float32, device=self.device)
 
-    def update(self, now, past):
+    def update(self, now, past, gated=False):
         t0 = time.perf_counter()
         x, y = window_batch(past, self.tod, self.scaler, range(now - self.n_windows, now), self.device)
         with torch.no_grad():
             base = predict_norm(self.model, x)
         smask = self.sensor_mask()
+        if gated and self.gate is not None:
+            m = (y != 0) & (self.hmask > 0) & ((smask > 0) if smask is not None else True)
+            yn = (y - self.scaler[0]) / self.scaler[1]
+            if not m.any() or (base - yn).abs()[m].mean() < self.gate:
+                self.active_until = -1  # the static model is right again: stop, let decay take over
+                return
         opt = torch.optim.Adam([self.alpha, self.b], lr=self.lr)
         for _ in range(self.steps):
             opt.zero_grad()
