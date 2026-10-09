@@ -10,22 +10,18 @@ point to. An earlier draft of the spec contained made-up numbers, and none of th
 
 ## Where we left off (update at the end of every session)
 
-2026-10-08. Baseline done (matches the paper). Detector calibrated on validation. First full
-experiment done (3 seeds x 4 variants, `results/metrics.csv`, `results/detection.csv`). Headline:
-the MVP update rule does not help yet, see IDEAS log of 2026-10-08 for numbers and the diagnosis.
-Next: the decisions listed at the end of that log entry.
+2026-10-09. Baseline done (matches the paper). Online method being optimised on validation, see
+`docs/EXPERIMENTS.md` (protocol, every experiment with hypothesis and outcome).
 
-To continue after a break:
-1. (Done) Training. If it ever needs rerunning:
-   `powershell -ExecutionPolicy Bypass -File scripts\start_training.ps1`. That script does nothing
-   if training is running or finished. If training died (shutdown, sleep problem, crash), it
-   restarts with `scripts/train_resumable.py`, which continues from the last finished epoch.
-2. When `checkpoints/metr_exp1_best_*.pth` exists: run `python scripts/eval_baseline.py` and
-   compare it with section 1.
-3. Then calibrate the detector on the validation period (week 3, last item). Smoke tests showed
-   that the network-wide mean signal misses most 5-sensor incidents. IDEAS section 1 and its
-   log have the order to try fixes in.
-4. Then `python scripts/run_experiments.py` and `python scripts/plots.py`.
+To continue after a break or a shutdown:
+1. Tuning queue: `powershell -ExecutionPolicy Bypass -File scripts\start_tuning.ps1`. It runs
+   the configs listed in `results/tune_queue.jsonl` that aren't in `results/tuning.csv` yet,
+   resuming per seed. Progress: `results/tune.log`. Safe to run twice.
+2. Read the newest outcomes in EXPERIMENTS.md and `results/tuning.csv`, write the next entry
+   (hypothesis first), add its configs to the queue, start the queue again.
+3. Training (done; only if it ever needs rerunning): `scripts\start_training.ps1`, resumes per epoch.
+4. Final step once the method is settled: test-set run with `scripts/run_experiments.py` (add the
+   new variant there), then plots and the summary for the team.
 
 ---
 

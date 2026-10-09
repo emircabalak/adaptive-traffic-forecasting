@@ -1,0 +1,5 @@
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E6b-d0.7 [dur 9]: dis_avg 20.092 (static 20.125, gain +0.033) | dis15/30/60 13.393/21.449/25.434 | norm15 delta +0.0006 OK | detected 6.3/11.7, false/day 0.80, update 361 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)

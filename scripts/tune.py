@@ -8,11 +8,21 @@ A config is a JSON object: "name", "policy" (a key of adapt.POLICIES), optional 
 overrides, default results/detector.json) and any keyword arguments of that policy. Static
 forecasts per seed are cached, so each config costs one replay per seed. Appends one row per
 config to results/tuning.csv.
+
+Interruptible: every finished (config, seed) is saved under results/tune_cache/runs, and a
+config already in tuning.csv is skipped. For long batches use the queue, which survives a
+shutdown (rerun the same command and it continues):
+  python scripts/tune.py --queue results/tune_queue.jsonl --log results/tune.log
+  powershell -ExecutionPolicy Bypass -File scripts/start_tuning.ps1   (same, detached)
+Each queue line is one JSON config; an optional "dur" key sets the blockage length (default 9).
 """
 import json
+import os
 import sys
 import time
 from pathlib import Path
+
+os.environ["FOR_DISABLE_CONSOLE_CTRL_HANDLER"] = "1"  # see IDEAS log, forrtl window-CLOSE abort
 
 import numpy as np
 import pandas as pd
@@ -63,13 +73,31 @@ def scores(p, sc):
     return r
 
 
+def done_names():
+    f = ROOT / "results" / "tuning.csv"
+    if not f.exists():
+        return set()
+    d = pd.read_csv(f)
+    return set(zip(d["name"], d["dur"]))
+
+
 def run(cfg, S):
     cfg = dict(cfg)
+    cfg.pop("dur", None)
     name, kind = cfg.pop("name"), cfg.pop("policy")
+    if (name, S["dur"]) in done_names():
+        print(f"{name} [dur {S['dur']}]: already in tuning.csv, skipped", flush=True)
+        return None
+    runs = CACHE / "runs"
+    runs.mkdir(parents=True, exist_ok=True)
     det = {**rx.detector_config(), **cfg.pop("det", {})}
     oracle = cfg.pop("oracle_offset", None)  # diagnostics: alarm exactly this many steps after each onset
     rows = []
     for sc in S["scen"]:
+        f_seed = runs / f"{name}_dur{S['dur']}_seed{sc['seed']}.json"
+        if f_seed.exists():  # finished before an interruption
+            rows.append(json.loads(f_seed.read_text()))
+            continue
         if oracle is not None:
             det["oracle"] = [int(o) + oracle for o in sc["ev"].onset]
         base = scores(static_preds(S, sc), sc)
@@ -82,6 +110,7 @@ def run(cfg, S):
         rows.append({**{k: r[k] for k in r}, **{f"static_{k}": base[k] for k in base},
                      "detected": st["detected"], "n_events": st["n_events"], "false_per_day": st["false_per_day"],
                      "update_ms": 1000 * np.mean(upd) if upd else 0.0})
+        f_seed.write_text(json.dumps({k: float(v) for k, v in rows[-1].items()}))
     m = pd.DataFrame(rows).mean()
     res = dict(name=name, dur=S["dur"], config=json.dumps({"policy": kind, **cfg, "oracle_offset": oracle}, default=str),
                dis_avg=np.mean([m["dis15"], m["dis30"], m["dis60"]]),
@@ -94,7 +123,8 @@ def run(cfg, S):
     print(f"{name} [dur {S['dur']}]: dis_avg {res['dis_avg']:.3f} (static {res['static_dis_avg']:.3f}, gain {res['dis_gain']:+.3f}) "
           f"| dis15/30/60 {m['dis15']:.3f}/{m['dis30']:.3f}/{m['dis60']:.3f} "
           f"| norm15 delta {res['norm15_delta']:+.4f} {'OK' if res['ok'] else 'VIOLATES'} "
-          f"| detected {m['detected']:.1f}/{m['n_events']:.1f}, false/day {m['false_per_day']:.2f}, update {m['update_ms']:.0f} ms")
+          f"| detected {m['detected']:.1f}/{m['n_events']:.1f}, false/day {m['false_per_day']:.2f}, update {m['update_ms']:.0f} ms",
+          flush=True)
     return res
 
 
@@ -126,6 +156,22 @@ def diag(S):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
+    if "--log" in args:  # pythonw has no console
+        i = args.index("--log")
+        sys.stdout = sys.stderr = open(Path(args[i + 1]).resolve(), "a", buffering=1)
+        del args[i: i + 2]
+    if "--queue" in args:
+        i = args.index("--queue")
+        cfgs = [json.loads(l) for l in open(args[i + 1], encoding="utf-8") if l.strip() and not l.startswith("#")]
+        setups = {}
+        for c in cfgs:
+            d = c.get("dur", 9)
+            if (c["name"], d) in done_names():
+                continue
+            setups.setdefault(d, setup(d))
+            run(c, setups[d])
+        print("queue finished", flush=True)
+        sys.exit()
     dur = 9
     if "--dur" in args:  # hold length of the synthetic blockage in steps (spec: 9 = 45 min)
         i = args.index("--dur")

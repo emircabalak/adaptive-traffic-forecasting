@@ -1,0 +1,6 @@
+# One config per line, run in order. Finished ones (already in tuning.csv) are skipped.
+{"name":"E6b-d0.7","policy":"node","max_horizon":6,"decay":0.7}
+{"name":"E6b-d0.6","policy":"node","max_horizon":6,"decay":0.6}
+{"name":"E7-local3","policy":"node","max_horizon":6,"decay":0.8,"local_z":3}
+{"name":"E7-local5","policy":"node","max_horizon":6,"decay":0.8,"local_z":5}
+{"name":"E8-active6","policy":"node","max_horizon":6,"decay":0.8,"active_steps":6}
