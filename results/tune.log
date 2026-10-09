@@ -60,3 +60,28 @@ C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: M
   return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
 E11-d0.7-active12 [dur 24]: dis_avg 22.171 (static 22.509, gain +0.338) | dis15/30/60 11.987/23.314/31.212 | norm15 delta +0.0018 OK | detected 7.3/11.7, false/day 0.68, update 102 ms
 queue finished
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E12-base [dur 9]: dis_avg 20.046 (static 20.125, gain +0.078) | dis15/30/60 13.317/21.388/25.434 | norm15 delta +0.0011 OK | detected 8.3/11.7, false/day 3.94, update 110 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E12-beta0.003 [dur 9]: dis_avg 19.939 (static 20.125, gain +0.185) | dis15/30/60 13.207/21.177/25.434 | norm15 delta +0.0055 VIOLATES | detected 8.3/11.7, false/day 3.94, update 93 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E12-active6 [dur 9]: dis_avg 19.905 (static 20.125, gain +0.220) | dis15/30/60 13.157/21.122/25.434 | norm15 delta +0.0035 OK | detected 8.3/11.7, false/day 3.84, update 88 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E12-active12 [dur 9]: dis_avg 19.938 (static 20.125, gain +0.187) | dis15/30/60 13.174/21.206/25.434 | norm15 delta +0.0055 VIOLATES | detected 8.3/11.7, false/day 3.84, update 85 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E12-base [dur 24]: dis_avg 22.438 (static 22.509, gain +0.071) | dis15/30/60 12.240/23.862/31.212 | norm15 delta +0.0013 OK | detected 8.7/11.7, false/day 4.14, update 84 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E12-beta0.003 [dur 24]: dis_avg 22.335 (static 22.509, gain +0.174) | dis15/30/60 12.146/23.647/31.212 | norm15 delta +0.0059 VIOLATES | detected 8.7/11.7, false/day 4.04, update 84 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E12-active6 [dur 24]: dis_avg 22.326 (static 22.509, gain +0.184) | dis15/30/60 12.120/23.645/31.212 | norm15 delta +0.0038 OK | detected 8.3/11.7, false/day 4.01, update 90 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E12-active12 [dur 24]: dis_avg 22.161 (static 22.509, gain +0.349) | dis15/30/60 11.903/23.367/31.212 | norm15 delta +0.0061 VIOLATES | detected 8.3/11.7, false/day 4.04, update 86 ms
+queue finished

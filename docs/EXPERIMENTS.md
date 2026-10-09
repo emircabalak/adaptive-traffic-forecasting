@@ -223,6 +223,27 @@ Change: base H6, decay 0.7, n_windows 3, threshold 8. Variants: plain; beta 0.00
 active 12. Each at dur 9 and dur 24.
 Selection: the spec scenario (dur 9) must improve on E10's best (+0.047) or stay within 0.01 of
 it while dur 24 improves clearly.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | norm15 delta (9 / 24) |
+|---|---|---|---|
+| base | +0.078 | +0.071 | +0.0011 / +0.0013 |
+| beta 0.003 | +0.185 | +0.174 | +0.0055 / +0.0059 (violates) |
+| active 6 | +0.220 | +0.184 | +0.0035 / +0.0038 |
+| active 12 | +0.187 | +0.349 | +0.0055 / +0.0061 (violates) |
+
+Kept: active 6 (H6, decay 0.7, n_windows 3, threshold 8). dur 9 gain is 0.220, up from 0.033
+before E9, and above the E4b oracle bound (+0.103, measured with the older settings). With fresh
+windows, continuous updates now help short incidents too (in E8, with 6 windows, they didn't).
+Active 12 is the best on long incidents but breaks the constraint: about 4 false alarms a day,
+each followed by 12 update steps on every sensor, add up in the normal period.
+
+### E13: keep long-incident gains without the normal-period cost
+Hypothesis: during continuous updates, training only the flagged sensors (local_z) confines a
+false alarm's effect to a few sensors, so active 12 can pass the constraint. A middle value
+(active 9) or a slightly stronger anchor (beta 0.005 with active 6) are the simpler alternatives.
+Change: on top of E12 active: active 12 + local_z 3; active 12 + local_z 5; active 9;
+active 6 + beta 0.005. Each at dur 9 and 24.
 Outcome: pending.
 
 
