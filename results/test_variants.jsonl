@@ -1,0 +1,8 @@
+# Test-set variants for scripts/run_experiments.py. Finalists come from docs/EXPERIMENTS.md.
+{"name":"static","policy":"static"}
+{"name":"naive","policy":"naive"}
+{"name":"head","policy":"head","beta":1.0,"det_file":"results/detector_E0.json"}
+{"name":"head-reset","policy":"head","beta":0.0,"reset":true,"det_file":"results/detector_E0.json"}
+{"name":"node-strong","policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":20}}
+{"name":"node-safe","policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"gate":0.25,"det":{"threshold":16}}
+{"name":"node-global","policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8}}

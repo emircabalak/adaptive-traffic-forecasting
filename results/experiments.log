@@ -1,0 +1,4 @@
+checkpoint C:\Users\emirc\OneDrive\Desktop\Adaptive Data\checkpoints\metr_exp1_best_2.74.pth; validation band raw [2.0722816167664453, 0.7363710606217437], detector signal [3.3988512474795654, 2.3994762090431485]
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 0 static         disrupted 15min MAE 13.482  alarms 46  updates 0

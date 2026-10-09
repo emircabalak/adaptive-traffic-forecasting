@@ -221,6 +221,7 @@ POLICIES = {
     "static": lambda model, tod, scaler, device, band=None, **det: DetectOnly(**det),
     "head": HeadAdapt,
     "node": NodeAdapt,
+    "naive": lambda model, tod, scaler, device, band=None, **det: NaiveFT(model, tod, scaler, device),
 }
 
 

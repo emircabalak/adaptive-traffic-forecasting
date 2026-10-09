@@ -287,9 +287,41 @@ at a small cost; threshold 16 sits between 12 (too many false alarms) and 20.
 Change: base E14-thr20. (a) + gate 0.25; (b) threshold 16; (c) threshold 16 + gate 0.25.
 Each at dur 9 and 24.
 After E15 the finalists go to the test set.
-Outcome: pending.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | norm15 delta (9 / 24) |
+|---|---|---|---|
+| threshold 20 + gate 0.25 | +0.177 | +0.296 | +0.0026 / +0.0024 |
+| threshold 16 | +0.206 | +0.544 | +0.0062 / +0.0057 (violates) |
+| threshold 16 + gate 0.25 | +0.205 | +0.295 | +0.0030 / +0.0031 |
+
+The gate buys margin on the normal period (about 0.003 instead of 0.005 to 0.006) and costs
+some long-incident gain. Tuning stops here: the remaining options trade along the same curve.
+
+## Finalists for the test set
+
+All share: node adapter, max_horizon 6, decay 0.7, n_windows 3, lr 0.05, 20 steps, beta 0.01,
+nbrtop3 PageHinkley detector (delta 0.2).
+
+| name | detector threshold | active steps | local_z | gate | validation gain (9 / 24) | norm15 delta |
+|---|---|---|---|---|---|---|
+| node-strong (E14-thr20) | 20 | 12 | 3 | none | +0.209 / +0.416 | +0.0048 / +0.0045 |
+| node-safe (E15-thr16-gate0.25) | 16 | 12 | 3 | 0.25 | +0.205 / +0.295 | +0.0030 / +0.0031 |
+| node-global (E12-active6) | 8 | 6 | none | none | +0.220 / +0.184 | +0.0035 / +0.0038 |
+
+Compared on the test split against static (a), naive (b), the spec's original head-only update
+(c, E0 detector) and the head reset variant, 3 seeds, 9-step and 24-step incidents
+(`results/test_variants.jsonl`, `scripts/run_experiments.py`). Which finalist becomes "ours" is
+decided by the same rule as in tuning, now on test: largest dur 9 gain with norm15 delta
+<= 0.005, dur 24 as tie-breaker. Since three finalists are compared on test, the report has to
+say so.
 
 
 
 
 
+
+Known limitation of the comparison: "head-reset" uses the E0 detector, but its reset band is
+computed on the current detector's signal (mean 3.40, std 2.40 instead of 5.86 and 3.71 for E0's
+signal). It therefore resets at a lower signal level than it was designed for. It's a reference
+variant, so this is noted rather than fixed.

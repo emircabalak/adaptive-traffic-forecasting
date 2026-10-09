@@ -1,11 +1,18 @@
-"""Run every variant over identical replays of the test split and write results CSVs.
+"""Test-set evaluation: every variant over identical replays, per seed and incident length.
 
-Each seed fixes one incident schedule; all variants replay exactly the same injected series.
-Usage: python scripts/run_experiments.py [--seeds 0 1 2] [--variants static naive ours reset]
+Each (seed, dur) fixes one incident schedule; all variants replay exactly the same series.
+Variants come from a JSONL file (default results/test_variants.jsonl), one config per line:
+"name", "policy" (a key of adapt.POLICIES), policy kwargs, optional "det" overrides and an
+optional "det_file" (detector JSON other than results/detector.json).
+
+Interruptible: each finished (variant, seed, dur) is saved in results/test_runs/ and skipped on
+restart; the CSVs are rebuilt from those files at the end. Detached start:
+  powershell -ExecutionPolicy Bypass -File scripts/start_experiments.ps1
 Outputs: results/metrics.csv, results/detection.csv, results/replays/*.npz (gitignored).
 """
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -13,6 +20,7 @@ import numpy as np
 import pandas as pd
 import torch
 
+os.environ["FOR_DISABLE_CONSOLE_CTRL_HANDLER"] = "1"  # see IDEAS log, forrtl window-CLOSE abort
 ROOT = Path(__file__).resolve().parents[1]
 # Block idle sleep (also behind Win+L) while this process runs. Windows drops the request when
 # the process exits. A closed lid or a manual Sleep still suspends the machine.
@@ -32,9 +40,9 @@ DEV = "cuda:0"
 TAIL = 12  # recovery tail after an incident ends, in steps, counted as disrupted
 
 
-def detector_config():
+def detector_config(path=ROOT / "results" / "detector.json"):
     """Detector chosen on the validation period by scripts/calibrate_detector.py."""
-    c = json.loads((ROOT / "results" / "detector.json").read_text())
+    c = json.loads(Path(path).read_text())
     det = {k: v for k, v in c.items() if k not in ("norm", "ckpt") and not k.startswith("val_")}
     if c["norm"]:
         z = np.load(ROOT / "results" / "residual_stats.npz")
@@ -42,16 +50,6 @@ def detector_config():
     if det.get("agg", "").startswith("nbr"):
         det["nbrs"] = drift.neighbour_index(data.load_adj()[1])
     return det
-
-
-def variants(model, tod, scaler, band):
-    DET = detector_config()
-    return {
-        "static": lambda: drift.DetectOnly(**DET),  # (a): never updates, still logs alarms
-        "naive": lambda: adapt.NaiveFT(model, tod, scaler, DEV),  # (b)
-        "ours": lambda: adapt.HeadAdapt(model, tod, scaler, DEV, beta=1.0, **DET),  # (c)
-        "reset": lambda: adapt.HeadAdapt(model, tod, scaler, DEV, beta=0.0, reset=True, band=(*band["det"], 1.0), **DET),
-    }
 
 
 def normal_band(ckpt, speed, tod, scaler, cache=ROOT / "results" / "val_band.json"):
@@ -111,60 +109,88 @@ def time_to_recovery(pred1, true1, events, t0, level, margin, hold=3):
     return np.array(out, float)
 
 
+def run_one(cfg, seed, dur, ckpt, speed, tod, scaler, adj, band, t0, t_end):
+    """One variant on one incident schedule. Returns (metric rows, detection row)."""
+    cfg = dict(cfg)
+    name, kind = cfg.pop("name"), cfg.pop("policy")
+    det = {**detector_config(ROOT / cfg.pop("det_file", "results/detector.json")), **cfg.pop("det", {})}
+    steps = t_end - t0 + 1
+    events = incidents.schedule(adj, speed, t0, t_end, seed=seed, ramp=2, duration=dur)
+    events.to_csv(ROOT / "results" / f"incidents_seed{seed}_dur{dur}.csv", index=False)
+    series = incidents.inject(speed, events)
+    y = replay.targets(series, t0, steps)
+    normal, disrupted = period_masks(events, t0, steps, speed.shape[1])
+    torch.manual_seed(seed)
+    model = gwn.build(DEV, ckpt)
+    policy = adapt.POLICIES[kind](model, tod, scaler, DEV, band=(*band["det"], 1.0), **det, **cfg)
+    out = replay.replay(model, series, tod, scaler, t0, t_end, policy, DEV)
+    p = out["preds"]
+    rows = []
+    for period, mask in [("all", None), ("normal", normal), ("disrupted", disrupted)]:
+        for h, i in metrics.HORIZONS.items():
+            m = metrics.masked_metrics(p[:, i], y[:, i], extra_mask=None if mask is None else mask[:, i])
+            rows.append(dict(seed=seed, dur=dur, variant=name, period=period, horizon=h, **m))
+    # t+1 forecasts aligned by target time: row j targets t0 + 1 + j
+    ttr = time_to_recovery(p[:, 0], y[:, 0], events, t0 + 1, *band["raw"])
+    alarms = getattr(policy, "alarms", [])
+    st = drift.detection_stats(alarms, events, t0, t_end, TAIL) if hasattr(policy, "alarms") else {}
+    upd = getattr(policy, "updates", [])
+    drow = dict(seed=seed, dur=dur, variant=name, **st, n_alarms=len(alarms),
+                mean_ttr=np.nanmean(ttr) if (~np.isnan(ttr)).any() else np.nan,
+                recovered=int((~np.isnan(ttr)).sum()), n_updates=len(upd),
+                mean_update_ms=1000 * np.mean([u[1] for u in upd]) if upd else 0.0,
+                max_update_ms=1000 * np.max([u[1] for u in upd]) if upd else 0.0,
+                n_resets=len(getattr(policy, "resets", [])))
+    np.savez_compressed(ROOT / "results" / "replays" / f"seed{seed}_dur{dur}_{name}.npz",
+                        preds=p[:, [0, 2, 5, 11]], alarms=np.array(alarms),
+                        signal=np.array(getattr(policy, "signal", [])))
+    return rows, drow
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
-    ap.add_argument("--variants", nargs="+", default=["static", "naive", "ours", "reset"])
-    ap.add_argument("--ramp", type=int, default=2)
+    ap.add_argument("--durs", type=int, nargs="+", default=[9, 24])
+    ap.add_argument("--variants", default=str(ROOT / "results" / "test_variants.jsonl"))
     ap.add_argument("--ckpt", default=None)
+    ap.add_argument("--log", default=None)
     a = ap.parse_args()
+    if a.log:  # pythonw has no console
+        sys.stdout = sys.stderr = open(Path(a.log).resolve(), "a", buffering=1)
 
+    cfgs = [json.loads(l) for l in open(a.variants, encoding="utf-8") if l.strip() and not l.startswith("#")]
     ckpt = a.ckpt or sorted((ROOT / "checkpoints").glob("metr_exp1_best_*.pth"))[-1]
     df = data.load_speed_df()
     speed, tod = df.values, replay.time_of_day(df.index)
     scaler = data.official_scaler()
     _, adj = data.load_adj()
     t0, t_end = data.test_start(len(speed)), len(speed) - 1 - replay.SEQ
-    steps = t_end - t0 + 1
     band = normal_band(ckpt, speed, tod, scaler)
-    print(f"checkpoint {ckpt}; validation band raw {band['raw']}, detector signal {band['det']}")
+    print(f"checkpoint {ckpt}; validation band raw {band['raw']}, detector signal {band['det']}", flush=True)
+    runs = ROOT / "results" / "test_runs"
+    runs.mkdir(parents=True, exist_ok=True)
     (ROOT / "results" / "replays").mkdir(parents=True, exist_ok=True)
 
-    mrows, drows = [], []
-    for seed in a.seeds:
-        events = incidents.schedule(adj, speed, t0, t_end, seed=seed, ramp=a.ramp)
-        events.to_csv(ROOT / "results" / f"incidents_seed{seed}.csv", index=False)
-        series = incidents.inject(speed, events)
-        y = replay.targets(series, t0, steps)
-        normal, disrupted = period_masks(events, t0, steps, speed.shape[1])
-        for name in a.variants:
-            torch.manual_seed(seed)
-            model = gwn.build(DEV, ckpt)
-            policy = variants(model, tod, scaler, band)[name]()
-            out = replay.replay(model, series, tod, scaler, t0, t_end, policy, DEV)
-            p = out["preds"]
-            for period, mask in [("all", None), ("normal", normal), ("disrupted", disrupted)]:
-                for h, i in metrics.HORIZONS.items():
-                    m = metrics.masked_metrics(p[:, i], y[:, i], extra_mask=None if mask is None else mask[:, i])
-                    mrows.append(dict(seed=seed, variant=name, period=period, horizon=h, **m))
-            # t+1 forecasts aligned by target time: row j targets t0 + 1 + j
-            ttr = time_to_recovery(p[:, 0], y[:, 0], events, t0 + 1, *band["raw"])
-            alarms = getattr(policy, "alarms", [])
-            st = drift.detection_stats(alarms, events, t0, t_end, TAIL) if hasattr(policy, "alarms") else {}
-            upd = getattr(policy, "updates", [])
-            drows.append(dict(seed=seed, variant=name, **st, n_alarms=len(alarms),
-                              mean_ttr=np.nanmean(ttr) if (~np.isnan(ttr)).any() else np.nan,
-                              recovered=int((~np.isnan(ttr)).sum()), n_updates=len(upd),
-                              mean_update_ms=1000 * np.mean([u[1] for u in upd]) if upd else 0.0,
-                              max_update_ms=1000 * np.max([u[1] for u in upd]) if upd else 0.0,
-                              n_resets=len(getattr(policy, "resets", []))))
-            np.savez_compressed(ROOT / "results" / "replays" / f"seed{seed}_{name}.npz",
-                                preds=p[:, [0, 2, 5, 11]], alarms=np.array(alarms),
-                                signal=np.array(getattr(policy, "signal", [])))
-            d = mrows[-3]  # disrupted 15min row
-            print(f"seed {seed} {name:7s} disrupted 15min MAE {d['mae']:.3f}  alarms {len(alarms)}  updates {len(upd)}")
-            pd.DataFrame(mrows).to_csv(ROOT / "results" / "metrics.csv", index=False, float_format="%.4f")
-            pd.DataFrame(drows).to_csv(ROOT / "results" / "detection.csv", index=False, float_format="%.4f")
+    for dur in a.durs:
+        for seed in a.seeds:
+            for cfg in cfgs:
+                f = runs / f"{cfg['name']}_seed{seed}_dur{dur}.json"
+                if f.exists():
+                    continue
+                rows, drow = run_one(cfg, seed, dur, ckpt, speed, tod, scaler, adj, band, t0, t_end)
+                f.write_text(json.dumps(dict(rows=rows, detection=drow), default=float))
+                d = [r for r in rows if r["period"] == "disrupted" and r["horizon"] == "15min"][0]
+                print(f"dur {dur} seed {seed} {cfg['name']:14s} disrupted 15min MAE {d['mae']:.3f}  "
+                      f"alarms {drow['n_alarms']}  updates {drow['n_updates']}", flush=True)
+
+    rows, drows = [], []
+    for f in sorted(runs.glob("*.json")):
+        r = json.loads(f.read_text())
+        rows += r["rows"]
+        drows.append(r["detection"])
+    pd.DataFrame(rows).to_csv(ROOT / "results" / "metrics.csv", index=False, float_format="%.4f")
+    pd.DataFrame(drows).to_csv(ROOT / "results" / "detection.csv", index=False, float_format="%.4f")
+    print("experiments finished", flush=True)
 
 
 if __name__ == "__main__":
