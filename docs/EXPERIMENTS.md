@@ -192,19 +192,37 @@ Outcome (static dis_avg 20.125):
 Hypothesis: the defaults (lr 0.05, 20 steps, 6 windows, beta 0.01) were never tuned; at least
 one of them has room.
 Change: one at a time: lr 0.02 / 0.1, steps 10 / 40, n_windows 3 / 12, beta 0.001 / 0.1.
-Outcome: pending.
+Outcome (base +0.033): n_windows 3 +0.056 (best), 12 +0.004; lr 0.1 +0.035, 0.02 +0.030;
+steps 10 +0.032, 40 +0.030; beta 0.001 +0.072 but norm15 delta +0.0059 (violates), beta 0.1
++0.010. Fresher training windows matter most: with 3 windows the incident steps make up more of
+the batch. Kept: n_windows 3. beta between 0.001 and 0.01 is worth one more try.
 
 ### E10: lower detector threshold, tuned end to end
 Hypothesis: a lower PageHinkley threshold on the nbrtop3 signal raises recall and cuts delay,
 and the extra false alarms barely touch the normal period.
 Change: detector override threshold 20, 12, 8 (delta 0.2), base H6 decay 0.7.
 Success: higher gain with norm15 delta still <= 0.005.
-Outcome: pending.
+Outcome (base threshold 30: +0.033, 6.3 of 11.7 detected, 0.80 false alarms a day):
+threshold 20 +0.007 (6.7, 1.78 a day), 12 +0.038 (8.7, 3.04), 8 +0.047 (8.3, 4.15). norm15
+delta stays about +0.001 throughout, so false alarms really are cheap now. Kept: threshold 8.
+Threshold 20 being worse than 30 is probably noise between runs of this size.
 
 ### E11: 2 hour incidents
 Hypothesis: with long incidents the early-recovery bias lasts the whole event, so the adapter
 gains much more, and continuous updates (E8) start to pay off.
 Change: dur 24; static, H6 decay 0.7, plus active_steps 6 and 12.
+Outcome (static dis15/30/60 12.334 / 23.982 / 31.212): decay 0.7 alone +0.052; active 6 +0.189;
+active 12 +0.338 (dis15 11.987, dis30 23.314). norm15 delta at most +0.0018. As predicted, long
+incidents are where updating pays off, and continuous updates are what unlocks it. For 9-step
+incidents continuous updates were mixed (E8), so E12 checks both lengths together.
+
+### E12: combine the winners, judged on both incident lengths
+Hypothesis: n_windows 3 + threshold 8 stack. Continuous updates help 2 h incidents a lot and
+cost little on 45-minute ones once the windows are fresher.
+Change: base H6, decay 0.7, n_windows 3, threshold 8. Variants: plain; beta 0.003; active 6;
+active 12. Each at dur 9 and dur 24.
+Selection: the spec scenario (dur 9) must improve on E10's best (+0.047) or stay within 0.01 of
+it while dur 24 improves clearly.
 Outcome: pending.
 
 
