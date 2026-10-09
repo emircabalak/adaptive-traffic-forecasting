@@ -168,6 +168,43 @@ The gain is small (+0.025 mph); the oracle bound in E4b was +0.103.
 - E8: `active_steps` 6: after an alarm keep updating every step for 6 steps (no decay meanwhile).
   Hypothesis: helps once the incident has lasted a few steps; may hurt for 9-step incidents near
   the release. Should matter more for the 2 h scenario.
+Outcome (static dis_avg 20.125):
+
+| config | dis15 | dis30 | gain | norm15 delta |
+|---|---|---|---|---|
+| decay 0.7 | 13.393 | 21.449 | +0.033 | +0.0006 |
+| decay 0.6 | 13.395 | 21.446 | +0.033 | +0.0004 |
+| decay 0.8, local_z 3 | 13.409 | 21.490 | +0.014 | +0.0012 |
+| decay 0.8, local_z 5 | 13.408 | 21.447 | +0.028 | +0.0017 |
+| decay 0.8, active 6 | 13.338 | 21.550 | +0.017 | +0.0015 |
+
+- Decay plateaus at 0.6 to 0.7. Kept: decay 0.7 (new best, +0.033).
+- Local adaptation doesn't help at decay 0.8 (+0.014 and +0.028 vs +0.025). Rejected, the simpler
+  global version stays. The adapter already keeps quiet sensors near zero on its own.
+- Continuous updates give the best dis15 so far but hurt dis30. Not kept for the 9-step case;
+  retested on the 2 h scenario in E11.
+- Observation that changes the plan: false alarms now cost almost nothing (norm15 delta below
+  0.001 at 0.8 false alarms a day). The detector was chosen under "at most 1 false alarm per
+  day", a limit set when false alarms damaged the normal period. Recall and delay are now worth
+  more, so the threshold should be tuned end to end on the final objective.
+
+### E9: update hyperparameters (base: H6, decay 0.7)
+Hypothesis: the defaults (lr 0.05, 20 steps, 6 windows, beta 0.01) were never tuned; at least
+one of them has room.
+Change: one at a time: lr 0.02 / 0.1, steps 10 / 40, n_windows 3 / 12, beta 0.001 / 0.1.
+Outcome: pending.
+
+### E10: lower detector threshold, tuned end to end
+Hypothesis: a lower PageHinkley threshold on the nbrtop3 signal raises recall and cuts delay,
+and the extra false alarms barely touch the normal period.
+Change: detector override threshold 20, 12, 8 (delta 0.2), base H6 decay 0.7.
+Success: higher gain with norm15 delta still <= 0.005.
+Outcome: pending.
+
+### E11: 2 hour incidents
+Hypothesis: with long incidents the early-recovery bias lasts the whole event, so the adapter
+gains much more, and continuous updates (E8) start to pay off.
+Change: dur 24; static, H6 decay 0.7, plus active_steps 6 and 12.
 Outcome: pending.
 
 
