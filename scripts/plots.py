@@ -1,5 +1,8 @@
-"""Figures from run_experiments.py outputs. Usage: python scripts/plots.py [--seed 0] [--event 0]
-Writes results/fig_*.png."""
+"""Figures from run_experiments.py outputs.
+Usage: python scripts/plots.py [--seed 0] [--event9 6] [--event24 12]
+The default incidents (seed 0) are the ones where ours gains most at 15 min, picked to show the
+mechanism; they are best cases, not typical ones (the bar charts show the averages).
+Writes results/fig_mae_bars_dur{9,24}.png and results/fig_incident_seed{S}_dur{D}_{K}.png."""
 import argparse
 import ast
 import sys
@@ -17,69 +20,87 @@ import data  # noqa: E402
 import incidents  # noqa: E402
 
 RES = ROOT / "results"
-COLORS = {"static": "#555555", "naive": "#d95f02", "ours": "#1b9e77", "reset": "#7570b3"}
+# fixed categorical order (dataviz reference palette, validated for light mode); ours = node-global
+COLORS = {"static": "#2a78d6", "naive": "#eb6834", "head": "#1baf7a", "node-global": "#eda100"}
+LABELS = {"static": "static (a)", "naive": "naive (b)", "head": "head only (spec c)", "node-global": "ours: node adapter"}
+INK, MUTED = "#1f1f1e", "#6b6a64"
 
 
-def bars():
+def style(ax):
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.spines[["left", "bottom"]].set_color(MUTED)
+    ax.tick_params(colors=MUTED)
+    ax.yaxis.grid(True, color="#e6e5e0", lw=0.8)
+    ax.set_axisbelow(True)
+
+
+def bars(dur):
     m = pd.read_csv(RES / "metrics.csv")
-    m = m[m.period != "all"]
+    m = m[(m.dur == dur) & m.variant.isin(COLORS) & (m.period != "all")]
     g = m.groupby(["period", "horizon", "variant"]).mae.agg(["mean", "std"]).reset_index()
-    fig, axes = plt.subplots(1, 2, figsize=(10, 3.5), sharey=False)
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+    hs = ["15min", "30min", "60min"]
     for ax, period in zip(axes, ["normal", "disrupted"]):
         d = g[g.period == period]
-        hs, vs = ["15min", "30min", "60min"], [v for v in COLORS if v in set(d.variant)]
-        w = 0.8 / len(vs)
-        for j, v in enumerate(vs):
+        w = 0.8 / len(COLORS)
+        for j, v in enumerate(COLORS):
             r = d[d.variant == v].set_index("horizon").reindex(hs)
-            ax.bar(np.arange(3) + j * w, r["mean"], w, yerr=r["std"], label=v, color=COLORS[v])
-        ax.set_xticks(np.arange(3) + w * (len(vs) - 1) / 2, hs)
-        ax.set_title(f"{period} period")
-        ax.set_ylabel("MAE (mph)")
-    axes[0].legend(frameon=False)
+            x = np.arange(3) + j * w
+            ax.bar(x, r["mean"], w * 0.92, yerr=r["std"], color=COLORS[v], label=LABELS[v],
+                   error_kw=dict(ecolor=MUTED, lw=1))
+            for xi, val in zip(x, r["mean"]):
+                ax.text(xi, val, f"{val:.2f}", ha="center", va="bottom", fontsize=7, color=INK, rotation=90)
+        ax.set_xticks(np.arange(3) + w * (len(COLORS) - 1) / 2, ["15 min", "30 min", "60 min"])
+        ax.set_title(f"{period} period", color=INK)
+        ax.set_ylabel("MAE (mph), mean over 3 seeds", color=INK)
+        ax.margins(y=0.15)
+        style(ax)
+    axes[0].legend(frameon=False, fontsize=8)
+    fig.suptitle(f"Test split, synthetic blockages of {dur * 5} min", color=INK)
     fig.tight_layout()
-    fig.savefig(RES / "fig_mae_bars.png", dpi=150)
+    fig.savefig(RES / f"fig_mae_bars_dur{dur}.png", dpi=150)
+    plt.close(fig)
 
 
-def incident(seed, k):
-    ev = pd.read_csv(RES / f"incidents_seed{seed}.csv", converters={"sensors": ast.literal_eval})
+def incident(seed, dur, k):
+    ev = pd.read_csv(RES / f"incidents_seed{seed}_dur{dur}.csv", converters={"sensors": ast.literal_eval})
     e = ev.iloc[k]
     df = data.load_speed_df()
     speed = incidents.inject(df.values, ev)
     t0 = data.test_start(len(speed))
-    lo, hi = e.onset - 36, e.end + 48
-    s = e.sensors[0]
-    fig, (a1, a2) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
+    lo, hi = e.onset - 24, e.end + 36
     t = np.arange(lo, hi)
-    a1.plot(df.index[t], np.where(speed[t, s] == 0, np.nan, speed[t, s]), "k", lw=2, label="actual")
-    for v, c in COLORS.items():
-        f = RES / "replays" / f"seed{seed}_{v}.npz"
-        if not f.exists():
-            continue
-        z = np.load(f)
-        p1 = z["preds"][:, 0]  # t+1 forecasts, row i issued at t0 + i, target t0 + i + 1
-        a1.plot(df.index[t], p1[t - 1 - t0, s], color=c, label=f"{v} t+1")
-        sig = z["signal"]
-        if len(sig):
-            keep = (sig[:, 0] >= lo) & (sig[:, 0] < hi)
-            a2.plot(df.index[sig[keep, 0].astype(int)], sig[keep, 1], color=c, label=v)
-        for al in z["alarms"]:
-            if lo <= al < hi:
-                a2.axvline(df.index[int(al)], color=c, ls=":", lw=1)
-    for a in (a1, a2):
-        a.axvspan(df.index[e.onset], df.index[e.end], color="red", alpha=0.08)
-    a1.set_ylabel(f"speed, sensor {s} (mph)")
-    a2.set_ylabel("detector signal (see detector.json)")
-    a1.legend(frameon=False, ncol=3)
-    a2.legend(frameon=False, ncol=4)
+    fig, axes = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
+    for ax, (col, hz) in zip(axes, [(1, "15 min"), (2, "30 min")]):
+        s = e.sensors[0]
+        ax.plot(df.index[t], np.where(speed[t, s] == 0, np.nan, speed[t, s]), color=INK, lw=2, label="actual")
+        for v in ["static", "node-global"]:
+            z = np.load(RES / "replays" / f"seed{seed}_dur{dur}_{v}.npz")
+            step = [0, 3, 6][col]  # saved horizons are 1, 3, 6, 12 steps ahead
+            p = z["preds"][:, col]  # row i issued at t0 + i, target t0 + i + step
+            ax.plot(df.index[t], p[t - step - t0, s], color=COLORS[v], lw=2, label=f"{LABELS[v]}, {hz} ahead")
+            if v == "node-global":
+                for al in z["alarms"]:
+                    if lo <= al < hi:
+                        ax.axvline(df.index[int(al)], color=COLORS[v], ls=":", lw=1)
+        ax.axvspan(df.index[e.onset], df.index[e.end], color="#e34948", alpha=0.08, lw=0)
+        ax.set_ylabel(f"speed at sensor {s} (mph)", color=INK)
+        ax.legend(frameon=False, fontsize=8, loc="lower left")
+        style(ax)
+    axes[0].set_title(f"Seed {seed}, incident {k} (a best case, see the averages in the bar charts): "
+                      f"forecasts at their target time, shaded = blockage, dotted = alarms", color=INK, fontsize=9)
     fig.tight_layout()
-    fig.savefig(RES / f"fig_incident_seed{seed}_{k}.png", dpi=150)
+    fig.savefig(RES / f"fig_incident_seed{seed}_dur{dur}_{k}.png", dpi=150)
+    plt.close(fig)
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--event", type=int, default=0)
+    ap.add_argument("--event9", type=int, default=6)
+    ap.add_argument("--event24", type=int, default=12)
     a = ap.parse_args()
-    bars()
-    incident(a.seed, a.event)
+    for dur, k in ((9, a.event9), (24, a.event24)):
+        bars(dur)
+        incident(a.seed, dur, k)
     print("figures written to", RES)

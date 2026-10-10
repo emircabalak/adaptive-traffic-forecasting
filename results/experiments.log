@@ -2,3 +2,120 @@ checkpoint C:\Users\emirc\OneDrive\Desktop\Adaptive Data\checkpoints\metr_exp1_b
 C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
   return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
 dur 9 seed 0 static         disrupted 15min MAE 13.482  alarms 46  updates 0
+dur 9 seed 0 naive          disrupted 15min MAE 15.770  alarms 0  updates 6849
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 0 head           disrupted 15min MAE 13.528  alarms 42  updates 42
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 0 head-reset     disrupted 15min MAE 13.921  alarms 40  updates 40
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 0 node-strong    disrupted 15min MAE 13.343  alarms 62  updates 806
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 0 node-safe      disrupted 15min MAE 13.191  alarms 70  updates 79
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 0 node-global    disrupted 15min MAE 13.170  alarms 102  updates 711
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 1 static         disrupted 15min MAE 12.903  alarms 40  updates 0
+dur 9 seed 1 naive          disrupted 15min MAE 14.139  alarms 0  updates 6849
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 1 head           disrupted 15min MAE 12.927  alarms 35  updates 35
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 1 head-reset     disrupted 15min MAE 13.288  alarms 33  updates 33
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 1 node-strong    disrupted 15min MAE 12.853  alarms 61  updates 793
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 1 node-safe      disrupted 15min MAE 12.894  alarms 67  updates 82
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 1 node-global    disrupted 15min MAE 12.714  alarms 97  updates 676
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 2 static         disrupted 15min MAE 13.359  alarms 42  updates 0
+dur 9 seed 2 naive          disrupted 15min MAE 14.285  alarms 0  updates 6849
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 2 head           disrupted 15min MAE 13.367  alarms 38  updates 38
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 2 head-reset     disrupted 15min MAE 13.715  alarms 36  updates 36
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+checkpoint C:\Users\emirc\OneDrive\Desktop\Adaptive Data\checkpoints\metr_exp1_best_2.74.pth; validation band raw [2.0722816167664453, 0.7363710606217437], detector signal [3.3988512474795654, 2.3994762090431485]
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 2 node-strong    disrupted 15min MAE 13.305  alarms 55  updates 715
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 2 node-safe      disrupted 15min MAE 13.128  alarms 64  updates 78
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 9 seed 2 node-global    disrupted 15min MAE 13.105  alarms 94  updates 655
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 0 static         disrupted 15min MAE 11.510  alarms 42  updates 0
+dur 24 seed 0 naive          disrupted 15min MAE 10.815  alarms 0  updates 6849
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 0 head           disrupted 15min MAE 11.531  alarms 40  updates 40
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 0 head-reset     disrupted 15min MAE 11.785  alarms 36  updates 36
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 0 node-strong    disrupted 15min MAE 11.177  alarms 60  updates 780
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 0 node-safe      disrupted 15min MAE 11.372  alarms 70  updates 82
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 0 node-global    disrupted 15min MAE 11.239  alarms 97  updates 676
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 1 static         disrupted 15min MAE 11.911  alarms 46  updates 0
+dur 24 seed 1 naive          disrupted 15min MAE 11.012  alarms 0  updates 6849
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 1 head           disrupted 15min MAE 11.966  alarms 38  updates 38
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 1 head-reset     disrupted 15min MAE 12.011  alarms 38  updates 38
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 1 node-strong    disrupted 15min MAE 11.470  alarms 62  updates 806
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 1 node-safe      disrupted 15min MAE 11.528  alarms 74  updates 95
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 1 node-global    disrupted 15min MAE 11.638  alarms 97  updates 676
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 2 static         disrupted 15min MAE 12.773  alarms 47  updates 0
+dur 24 seed 2 naive          disrupted 15min MAE 11.672  alarms 0  updates 6849
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 2 head           disrupted 15min MAE 12.812  alarms 40  updates 40
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 2 head-reset     disrupted 15min MAE 13.151  alarms 38  updates 38
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 2 node-strong    disrupted 15min MAE 11.842  alarms 60  updates 780
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 2 node-safe      disrupted 15min MAE 12.444  alarms 67  updates 82
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+dur 24 seed 2 node-global    disrupted 15min MAE 12.246  alarms 99  updates 690
+experiments finished

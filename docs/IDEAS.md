@@ -207,3 +207,8 @@ Append, newest last. Format: date, what we tried, outcome, next step.
      longer than detection delay plus one update, so there is little time left to benefit.
   4. Tune beta, lr and K on validation with the normal-period guard. beta = 1 is too weak to keep
      the normal error flat.
+- 2026-10-10: tuning and the test run are done; the log moved to docs/EXPERIMENTS.md, which has
+  every experiment from E0 on. Ideas still open from this file: mined real incidents as a test
+  scenario (mining thresholds need tightening), the multi-horizon detection signal, per-sensor
+  detectors, EWC or replay-based anchors, and a residual-correction model as an alternative
+  update rule.

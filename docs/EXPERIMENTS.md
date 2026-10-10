@@ -325,3 +325,34 @@ Known limitation of the comparison: "head-reset" uses the E0 detector, but its r
 computed on the current detector's signal (mean 3.40, std 2.40 instead of 5.86 and 3.71 for E0's
 signal). It therefore resets at a lower signal level than it was designed for. It's a reference
 variant, so this is noted rather than fixed.
+
+## Test-set result and final choice (2026-10-10)
+
+Test split, 3 seeds (0, 1, 2), about 21 synthetic incidents per seed and length. Gain = static
+disrupted MAE minus variant disrupted MAE, averaged over 15/30/60 min, mean +- std over seeds.
+norm15 delta = normal-period MAE at 15 min minus static's (limit 0.005).
+
+| variant | 45 min gain | 2 h gain | norm15 delta (45 min / 2 h) |
+|---|---|---|---|
+| naive (b) | -3.372 +- 0.286 | -2.202 +- 0.165 | +1.853 / +1.885 |
+| head, spec (c) | +0.001 +- 0.012 | -0.005 +- 0.017 | +0.029 / +0.033 |
+| head-reset | -0.144 +- 0.070 | -0.049 +- 0.121 | +0.058 / +0.052 |
+| node-strong | +0.156 +- 0.018 | +0.466 +- 0.167 | +0.0053 / +0.0057 |
+| node-safe | +0.140 +- 0.071 | +0.301 +- 0.103 | +0.0027 / +0.0028 |
+| node-global | +0.185 +- 0.047 | +0.267 +- 0.068 | +0.0036 / +0.0034 |
+
+Decision, by the rule fixed before the test run: node-global (largest 45-minute gain within the
+constraint) is "ours". node-strong has the best long-incident gain but goes just over the limit
+on test (0.0053), which was the risk noted when it was picked; node-safe is the alternative if a
+reviewer wants a larger margin on the normal period.
+
+node-global per horizon, 45-minute incidents, disrupted period: 15 min 13.248 -> 12.996, 30 min
+20.811 -> 20.509, 60 min unchanged (25.040, by design). Normal period: 2.663 -> 2.666 at 15 min.
+Detection: 14.0 of 21.7 incidents per seed (static's detector setting: 10.7), mean delay 6.7
+steps, 3.8 false alarms per normal day. Mean update time 123 ms (max 303 ms).
+
+Caveats for the report: the three finalists were compared on test, so the choice among them
+used test data (the tuning itself did not). Gains are small in absolute terms because most of
+the disrupted error comes from forecasts issued before an incident starts (E1), which no
+online method can fix. Disrupted-period MAPE is very large for every variant (around 100 % at
+15 min) because blocked speeds are near the 5 mph floor; MAE is the meaningful metric there.

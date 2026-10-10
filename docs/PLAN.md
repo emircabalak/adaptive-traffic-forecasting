@@ -10,8 +10,10 @@ point to. An earlier draft of the spec contained made-up numbers, and none of th
 
 ## Where we left off (update at the end of every session)
 
-2026-10-09. Baseline done (matches the paper). Online method being optimised on validation, see
-`docs/EXPERIMENTS.md` (protocol, every experiment with hypothesis and outcome).
+2026-10-10. Method settled and evaluated on test. "Ours" is the node adapter (node-global in
+`results/test_variants.jsonl`); test results and the decision are at the end of
+`docs/EXPERIMENTS.md`, the team-facing summary is `docs/TEAM_UPDATE.md`, figures in `results/`.
+Open: mined real incidents as a scenario, dashboard.
 
 To continue after a break or a shutdown:
 1. Tuning queue: `powershell -ExecutionPolicy Bypass -File scripts\start_tuning.ps1`. It runs
@@ -288,3 +290,7 @@ Append only, newest last.
 - 2026-10-08: The detector signal is the top-3 mean of per-sensor, per-time-of-day z-scored t+1
   errors (still the masked t+1 absolute error, only normalised). The raw network mean caught
   at most 14 % of validation incidents at <= 1 false alarm per day.
+- 2026-10-10: Final method: per-sensor output adapter (src/adapt.py NodeAdapt) with max_horizon 6,
+  decay 0.7, 3 training windows, 6 continuous update steps after an alarm, nbrtop3 PageHinkley
+  detector at threshold 8. Chosen on validation (EXPERIMENTS E0 to E15), confirmed on test:
+  disrupted gain +0.185 mph (45 min) and +0.267 (2 h), normal-period delta +0.0036.
