@@ -411,7 +411,18 @@ Change: `anomaly_ratio` r in NodeAdapt. At an alarm, sensors with recent confirm
 tracked; updates continue every step while any tracked sensor reads below r times its usual
 speed (`data.speed_profile`, median per 5-minute slot from the training period), capped at 12 h.
 Base node-global. Variants: r 0.6; r 0.75; r 0.6 + local_z 3. Each at dur 9 and 24.
-Outcome: pending.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | norm15 delta (9 / 24) |
+|---|---|---|---|
+| r 0.6 | +0.287 | +0.513 | +0.0159 / +0.0154 |
+| r 0.75 | +0.293 | +0.510 | +0.0180 / +0.0172 |
+| r 0.6 + local_z 3 | +0.519 | +0.706 | +0.0252 / +0.0249 |
+
+Gains go up on both lengths, but every variant breaks the constraint by a wide margin. Tracking
+keeps the adapter updating without decay for as long as a tracked sensor stays slow, and the
+global adapter refits every sensor at each of those steps, so the normal period pays. Rejected
+in this form; E18 tries the same anomaly gating applied per sensor, as a rule.
 
 ### E18: anomaly-gated persistence pull
 Hypothesis: a pull towards the last observed speed, applied only to sensors flagged after an
