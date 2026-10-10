@@ -461,4 +461,30 @@ are the check for that.
 Change: Persist gets `min_age`. Variants (flagged, threshold 8, hold 72): r 0.3 w 1 up to 30
 min; + min_age 3; r 0.3 w 0.7 up to 30 min; r 0.3 w 1 all horizons + min_age 3; and the learned
 adapter (node-global) with anomaly_ratio 0.3 and local_z 3. Each at dur 9 and 24.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | dis15/30 at dur 9 (static 13.44 / 21.50) | norm15 delta (9 / 24) |
+|---|---|---|---|---|
+| rule r 0.3, w 1, to 30 min | -0.314 | +2.198 | 12.93 / 22.95 | +0.0044 / +0.0045 |
+| + min_age 3 | -0.700 | +1.967 | 13.25 / 23.79 | +0.0018 / +0.0020 |
+| rule r 0.3, w 0.7, to 30 min | -0.101 | +1.657 | 13.01 / 22.23 | +0.0020 / +0.0022 |
+| rule r 0.3, all horizons, min_age 3 | -2.498 | +1.897 | 13.25 / 23.79 | +0.0018 / +0.0020 |
+| node adapter, anomaly 0.3, local_z 3 | +0.461 | +0.641 | 13.03 / 20.53 | +0.0170 / +0.0171 |
+
+The severity gate works for the normal period: the rule now passes the constraint and keeps a
+large long-incident gain (+2.2). On 45-minute incidents the 15 minute error improves (12.93 vs
+13.44) but the 30 minute error gets worse (22.95 vs 21.50): half an hour ahead the short
+incident is often over. min_age doesn't help. The learned adapter with anomaly tracking still
+fails the constraint. Kept: the rule with r 0.3 as the long-incident component.
+
+### E20: short pull horizon, tapered weights, and a hybrid with the learned adapter
+Hypothesis: the rule should act strongly at 15 minutes and fade towards 30, which keeps its
+15 minute gain on short incidents without the 30 minute loss. The learned adapter (node-global,
++0.185 on short incidents) and the rule (+2.2 on long ones) fix different things, so combining
+them should give the best of both.
+Change: Persist gets `taper` K: horizon k (1-based) gets weight w * max(0, 1 - (k - 1) / K).
+New `hybrid` policy: node-global's adapter first, then the rule on top, each with its own copy
+of the detector. Variants: (a) rule up to 15 min; (b) rule with taper 6; (c) hybrid with (a);
+(d) hybrid with (b). Each at dur 9 and 24.
+Selection: both lengths positive and the constraint met; then the larger dur 9 gain.
 Outcome: pending.

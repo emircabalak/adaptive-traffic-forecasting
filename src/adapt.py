@@ -248,11 +248,13 @@ class Persist(DetectOnly):
     flag_z in the last few steps, each for `hold` steps."""
 
     def __init__(self, model, tod, scaler, device="cuda:0", mode="all", w=1.0, max_horizon=SEQ,
-                 windows=(), flag_z=3.0, hold=12, anomaly_ratio=None, min_age=1, band=None, kind="adwin",
-                 agg="mean", **det_params):
+                 windows=(), flag_z=3.0, hold=12, anomaly_ratio=None, min_age=1, taper=None, band=None,
+                 kind="adwin", agg="mean", **det_params):
         super().__init__(kind, agg, **det_params)
         self.scaler, self.device, self.mode, self.w = scaler, device, mode, w
         self.hmask = (torch.arange(SEQ, device=device) < max_horizon).float()[:, None]
+        if taper:  # horizon k (0-based index) gets weight max(0, 1 - k / taper)
+            self.hmask = self.hmask * (1 - torch.arange(SEQ, device=device) / taper).clamp(min=0)[:, None]
         self.windows, self.flag_z, self.hold = list(windows), flag_z, hold
         self.until = np.full(model.nodevec1.shape[0], -1)
         # anomaly_ratio: a flagged sensor is only pulled while it reads below this fraction of its
@@ -298,12 +300,32 @@ class Persist(DetectOnly):
         return out + self.w * self.hmask * a * pull
 
 
+class Hybrid:
+    """Learned per-sensor adapter (NodeAdapt) with the severe-slowdown rule (Persist) on top.
+    Both see the same labels; each keeps its own copy of the detector."""
+
+    def __init__(self, model, tod, scaler, device="cuda:0", node=None, persist=None, band=None, **det):
+        self.node = NodeAdapt(model, tod, scaler, device, band=band, **det, **(node or {}))
+        self.rule = Persist(model, tod, scaler, device, band=band, **det, **(persist or {}))
+
+    def step(self, now, labels, past):
+        self.node.step(now, labels, past)
+        self.rule.step(now, labels, past)
+
+    def adjust(self, out, x):
+        return self.rule.adjust(self.node.adjust(out, x), x)
+
+    def __getattr__(self, name):  # alarms, signal, updates: report the adapter's
+        return getattr(self.__dict__["node"], name)
+
+
 # name -> factory(model, tod, scaler, device, band=..., **detector and policy kwargs)
 POLICIES = {
     "static": lambda model, tod, scaler, device, band=None, **det: DetectOnly(**det),
     "head": HeadAdapt,
     "node": NodeAdapt,
     "persist": Persist,
+    "hybrid": Hybrid,
     "naive": lambda model, tod, scaler, device, band=None, **det: NaiveFT(model, tod, scaler, device),
 }
 
