@@ -376,7 +376,28 @@ the last observed speed with weight w on selected sensors.
 - E16c: the same rule on sensors flagged by our detector (threshold 8 and 20), held 12 steps.
 Each at dur 9 and 24. Diagnostic: these are references, not candidate methods (E16c could
 become one).
-Outcome: pending.
+Outcome (gain over static, dis_avg; static is 20.125 at dur 9 and 22.509 at dur 24):
+
+| reference | dur 9 gain | dur 24 gain | dis15/30/60 at dur 24 | norm15 delta |
+|---|---|---|---|---|
+| persistence everywhere | -6.131 | +4.600 | 8.36 / 15.60 / 29.77 | +0.75 |
+| oracle persistence, all horizons | -6.292 | +4.589 | 8.44 / 15.66 / 29.66 | 0 |
+| oracle persistence, up to 30 min | -0.921 | +4.071 | 8.44 / 15.66 / 31.21 | 0 |
+| flagged by detector, threshold 8 | -3.338 | +3.414 | 10.87 / 20.23 / 26.18 | +0.019 |
+| flagged by detector, threshold 20 | -2.593 | +3.060 | 11.00 / 20.61 / 26.74 | +0.008 |
+| ours today (node-global, test) | +0.185 | +0.267 | | +0.004 |
+
+The room is very different by incident length. In 2 h incidents, holding the last observed speed
+is about 4.6 mph better than Graph WaveNet over the disrupted period (15 min: 12.3 -> 8.4), and
+our adapter gets only 0.27 of that. In 45-minute incidents the same rule is clearly worse, even
+with perfect knowledge of where and when, because 30 and 60 minute forecasts cross the release.
+The static model's "it recovers soon" is partly right for short incidents. A detector-driven
+version already gets most of the long-incident gain but damages the normal period: falsely
+flagged sensors get pulled for 12 steps.
+Conclusions: (1) the correction has to be much stronger in long incidents than in short ones;
+(2) it should only act on sensors that are still far below their usual speed, which also makes
+false alarms harmless; (3) the 30 and 60 minute horizons need weaker pulls early in an incident.
+E17 tests (2) inside the learned adapter; E18 tests it as an explicit rule.
 
 ### E17: keep adapting while the sensor is still anomalous
 Hypothesis: the t+1 error disappears about 3 steps after onset (the model follows the low input),
@@ -390,4 +411,15 @@ Change: `anomaly_ratio` r in NodeAdapt. At an alarm, sensors with recent confirm
 tracked; updates continue every step while any tracked sensor reads below r times its usual
 speed (`data.speed_profile`, median per 5-minute slot from the training period), capped at 12 h.
 Base node-global. Variants: r 0.6; r 0.75; r 0.6 + local_z 3. Each at dur 9 and 24.
+Outcome: pending.
+
+### E18: anomaly-gated persistence pull
+Hypothesis: a pull towards the last observed speed, applied only to sensors flagged after an
+alarm and only while each one reads below r times its usual speed, captures most of the long
+incident gain (E16) without the normal-period damage (a falsely flagged sensor runs at its usual
+speed, so it isn't pulled). For short incidents the pull should be weaker on long horizons;
+this first version only varies the weight w and the horizon cut-off.
+Change: Persist mode "flagged" gets `anomaly_ratio`: a flagged sensor is only pulled while below
+r times its usual speed. Variants (threshold 8, hold 72 steps, r 0.6): w 1.0 up to 30 min;
+w 0.5 all horizons; w 1.0 all horizons. Each at dur 9 and 24.
 Outcome: pending.

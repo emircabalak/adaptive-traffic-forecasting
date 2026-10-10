@@ -65,3 +65,9 @@
 {"name":"E17-anom0.6","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.6}
 {"name":"E17-anom0.75","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.75}
 {"name":"E17-anom0.6-local3","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.6,"local_z":3}
+{"name":"E18-w1-H6","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":1.0,"max_horizon":6}
+{"name":"E18-w0.5-H12","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":0.5}
+{"name":"E18-w1-H12","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":1.0}
+{"name":"E18-w1-H6","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":1.0,"max_horizon":6}
+{"name":"E18-w0.5-H12","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":0.5}
+{"name":"E18-w1-H12","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":1.0}
