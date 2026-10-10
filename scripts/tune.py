@@ -100,9 +100,15 @@ def run(cfg, S):
             continue
         if oracle is not None:
             det["oracle"] = [int(o) + oracle for o in sc["ev"].onset]
+        if "oracle_windows_delay" in cfg:  # diagnostics for Persist mode "oracle"
+            dl = cfg["oracle_windows_delay"]
+            cfg_run = {k: v for k, v in cfg.items() if k != "oracle_windows_delay"}
+            cfg_run["windows"] = [(int(e.onset) + dl, int(e.end), e.sensors) for e in sc["ev"].itertuples()]
+        else:
+            cfg_run = cfg
         base = scores(static_preds(S, sc), sc)
         model = gwn.build(rx.DEV, S["ckpt"])
-        pol = adapt.POLICIES[kind](model, S["tod"], S["scaler"], rx.DEV, band=(*S["band"]["det"], 1.0), **det, **cfg)
+        pol = adapt.POLICIES[kind](model, S["tod"], S["scaler"], rx.DEV, band=(*S["band"]["det"], 1.0), **det, **cfg_run)
         out = replay.replay(model, sc["series"], S["tod"], S["scaler"], S["v0"], S["v1"], pol, rx.DEV)
         r = scores(out["preds"], sc)
         st = drift.detection_stats(pol.alarms, sc["ev"], S["v0"], S["v1"], rx.TAIL)

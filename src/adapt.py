@@ -216,11 +216,56 @@ class NaiveFT(Static):
         self.updates.append((now, time.perf_counter() - t0, loss.item()))
 
 
+class Persist(DetectOnly):
+    """Rule-based reference, not a parameter update: on selected sensors the forecast is pulled
+    towards the last observed speed, y' = y + w * (last - y), for horizons up to max_horizon.
+    mode "all": every sensor, always (plain persistence when w = 1).
+    mode "oracle": the sensors and times in `windows` [(start, end, sensors)], for diagnostics.
+    mode "flagged": after a detector alarm, sensors whose neighbour-confirmed z went above
+    flag_z in the last few steps, each for `hold` steps."""
+
+    def __init__(self, model, tod, scaler, device="cuda:0", mode="all", w=1.0, max_horizon=SEQ,
+                 windows=(), flag_z=3.0, hold=12, band=None, kind="adwin", agg="mean", **det_params):
+        super().__init__(kind, agg, **det_params)
+        self.scaler, self.device, self.mode, self.w = scaler, device, mode, w
+        self.hmask = (torch.arange(SEQ, device=device) < max_horizon).float()[:, None]
+        self.windows, self.flag_z, self.hold = list(windows), flag_z, hold
+        self.until = np.full(model.nodevec1.shape[0], -1)
+        self.now, self.updates = -1, []
+
+    def step(self, now, labels, past):
+        self.now = now
+        if super().step(now, labels, past) and self.mode == "flagged" and self.recent:
+            hot = np.max(np.nan_to_num(np.stack(self.recent), nan=-np.inf), 0) > self.flag_z
+            self.until[hot] = now + self.hold
+
+    def active(self):
+        n = len(self.until)
+        if self.mode == "all":
+            return np.ones(n, bool)
+        if self.mode == "oracle":
+            a = np.zeros(n, bool)
+            for start, end, sensors in self.windows:
+                if start <= self.now <= end:
+                    a[list(sensors)] = True
+            return a
+        return self.until >= self.now
+
+    def adjust(self, out, x):
+        a = torch.tensor(self.active(), dtype=torch.float32, device=out.device)
+        if not a.any():
+            return out
+        last, ok = last_valid(x, self.scaler)
+        pull = torch.where(ok[:, None, :], last[:, None, :] - out, torch.zeros_like(out))
+        return out + self.w * self.hmask * a * pull
+
+
 # name -> factory(model, tod, scaler, device, band=..., **detector and policy kwargs)
 POLICIES = {
     "static": lambda model, tod, scaler, device, band=None, **det: DetectOnly(**det),
     "head": HeadAdapt,
     "node": NodeAdapt,
+    "persist": Persist,
     "naive": lambda model, tod, scaler, device, band=None, **det: NaiveFT(model, tod, scaler, device),
 }
 

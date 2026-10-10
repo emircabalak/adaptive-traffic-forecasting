@@ -356,3 +356,24 @@ used test data (the tuning itself did not). Gains are small in absolute terms be
 the disrupted error comes from forecasts issued before an incident starts (E1), which no
 online method can fix. Disrupted-period MAPE is very large for every variant (around 100 % at
 15 min) because blocked speeds are near the 5 mph floor; MAE is the meaningful metric there.
+
+## Round 2: closing the gap to the actual speed
+
+Motivation (2026-10-10): the test figures show that during an incident ours is only slightly
+closer to the actual speed than static. Disrupted MAE is about 13 mph at 15 min against about
+2.7 in normal periods, and ours removes 2 % of it. Before tuning further, measure how much room
+there is.
+
+### E16: how much room is there? Persistence references
+Hypothesis: during a blockage, "the last observed speed persists" is far more accurate than
+Graph WaveNet, so the room for improvement is large, and the limiting factor is knowing where
+and when to apply such a correction.
+Change: new `Persist` policy (src/adapt.py), a rule-based reference that pulls the forecast to
+the last observed speed with weight w on selected sensors.
+- E16a: persistence on every sensor, always (plain last-value forecast).
+- E16b: oracle, persistence only on the incident's sensors from onset + 1 to the end, all
+  horizons; E16b-H6: same, only up to 30 min. Upper bound for "perfect detection + simple rule".
+- E16c: the same rule on sensors flagged by our detector (threshold 8 and 20), held 12 steps.
+Each at dur 9 and 24. Diagnostic: these are references, not candidate methods (E16c could
+become one).
+Outcome: pending.
