@@ -154,3 +154,17 @@ C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: M
   return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
 E15-thr16-gate0.25 [dur 24]: dis_avg 22.214 (static 22.509, gain +0.295) | dis15/30/60 12.105/23.326/31.212 | norm15 delta +0.0031 OK | detected 7.0/11.7, false/day 2.21, update 133 ms
 queue finished
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E16a-persist-all [dur 9]: dis_avg 26.256 (static 20.125, gain -6.131) | dis15/30/60 12.904/24.276/41.586 | norm15 delta +0.7509 VIOLATES | detected 5.3/11.7, false/day 1.54, update 0 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E16b-oracle [dur 9]: dis_avg 26.417 (static 20.125, gain -6.292) | dis15/30/60 13.211/24.491/41.550 | norm15 delta +0.0000 OK | detected 6.7/11.7, false/day 0.74, update 0 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E16b-oracle-H6 [dur 9]: dis_avg 21.046 (static 20.125, gain -0.921) | dis15/30/60 13.211/24.491/25.434 | norm15 delta +0.0000 OK | detected 6.7/11.7, false/day 0.74, update 0 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+E16c-flag-thr8 [dur 9]: dis_avg 23.463 (static 20.125, gain -3.338) | dis15/30/60 13.188/23.196/34.005 | norm15 delta +0.0196 VIOLATES | detected 8.7/11.7, false/day 3.66, update 0 ms
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)

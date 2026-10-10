@@ -17,6 +17,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+import data
 import gwn
 from drift import DetectOnly
 from replay import SEQ, Static, make_input
@@ -117,8 +118,15 @@ class NodeAdapt(DetectOnly):
 
     def __init__(self, model, tod, scaler, device="cuda:0", steps=20, lr=0.05, beta=0.01,
                  huber_delta=1.0, n_windows=6, decay=1.0, per_horizon=False, max_horizon=SEQ, local_z=None,
-                 active_steps=0, gate=None, band=None, kind="adwin", agg="mean", **det_params):
+                 active_steps=0, gate=None, anomaly_ratio=None, track_z=3.0, max_track=144, band=None,
+                 kind="adwin", agg="mean", **det_params):
         super().__init__(kind, agg, **det_params)
+        # anomaly_ratio: after an alarm, keep updating every step for as long as any tracked sensor
+        # (recent confirmed z above track_z at the alarm) reads below anomaly_ratio times its usual
+        # speed for that time of day (data.speed_profile, training data). Capped at max_track steps.
+        self.anomaly_ratio, self.track_z, self.max_track = anomaly_ratio, track_z, max_track
+        self.track, self.track_until = None, -1
+        self.profile = data.speed_profile() if anomaly_ratio else None
         # local_z: train only sensors whose recent (neighbour-confirmed) z exceeded it, plus neighbours.
         # active_steps: after an alarm, keep updating every step for this many steps (no decay meanwhile).
         self.local_z, self.active_steps, self.active_until = local_z, active_steps, -1
@@ -144,11 +152,26 @@ class NodeAdapt(DetectOnly):
     def adjust(self, out, x):
         return self._apply(out, x)
 
+    def anomalous(self, now, past):
+        """True while a tracked sensor is still far below its usual speed."""
+        if self.track is None or now > self.track_until:
+            return False
+        v = past[now, self.track]
+        ok = v != 0
+        if not ok.any():
+            return True  # missing readings: keep the current state
+        usual = self.profile[now % self.profile.shape[0], self.track]
+        return bool((v[ok] < self.anomaly_ratio * usual[ok]).any())
+
     def step(self, now, labels, past):
         if super().step(now, labels, past):
             self.active_until = now + self.active_steps
+            if self.anomaly_ratio and self.recent:
+                hot = np.max(np.nan_to_num(np.stack(self.recent), nan=-np.inf), 0) > self.track_z
+                if hot.any():
+                    self.track, self.track_until = np.flatnonzero(hot), now + self.max_track
             self.update(now, past)
-        elif now <= self.active_until:
+        elif now <= self.active_until or (self.anomaly_ratio and self.anomalous(now, past)):
             self.update(now, past, gated=True)
         elif self.decay < 1:
             with torch.no_grad():

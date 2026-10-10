@@ -377,3 +377,17 @@ the last observed speed with weight w on selected sensors.
 Each at dur 9 and 24. Diagnostic: these are references, not candidate methods (E16c could
 become one).
 Outcome: pending.
+
+### E17: keep adapting while the sensor is still anomalous
+Hypothesis: the t+1 error disappears about 3 steps after onset (the model follows the low input),
+but the incident goes on, so a fixed active window (6 steps in node-global) stops updating long
+before a long incident ends. A sensor that reads far below its usual speed for that time of day
+is a direct sign the incident is still on. Keeping the adapter updating while that holds should
+help long incidents a lot and leave short ones and the normal period roughly unchanged. The
+alarm itself still comes from the t+1 error detector, as the spec requires; the anomaly only
+decides how long the update phase lasts.
+Change: `anomaly_ratio` r in NodeAdapt. At an alarm, sensors with recent confirmed z above 3 are
+tracked; updates continue every step while any tracked sensor reads below r times its usual
+speed (`data.speed_profile`, median per 5-minute slot from the training period), capped at 12 h.
+Base node-global. Variants: r 0.6; r 0.75; r 0.6 + local_z 3. Each at dur 9 and 24.
+Outcome: pending.

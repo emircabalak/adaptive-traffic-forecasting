@@ -59,3 +59,9 @@
 {"name":"E16b-oracle-H6","dur":24,"policy":"persist","w":1.0,"mode":"oracle","oracle_windows_delay":1,"max_horizon":6}
 {"name":"E16c-flag-thr8","dur":24,"policy":"persist","w":1.0,"mode":"flagged","hold":12,"det":{"threshold":8}}
 {"name":"E16c-flag-thr20","dur":24,"policy":"persist","w":1.0,"mode":"flagged","hold":12,"det":{"threshold":20}}
+{"name":"E17-anom0.6","dur":9,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.6}
+{"name":"E17-anom0.75","dur":9,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.75}
+{"name":"E17-anom0.6-local3","dur":9,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.6,"local_z":3}
+{"name":"E17-anom0.6","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.6}
+{"name":"E17-anom0.75","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.75}
+{"name":"E17-anom0.6-local3","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.6,"local_z":3}

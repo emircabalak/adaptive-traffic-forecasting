@@ -50,6 +50,22 @@ def official_scaler(npz_dir=DATA / "METR-LA"):
     return float(x.mean()), float(x.std())
 
 
+def speed_profile(cache=ROOT / "results" / "speed_profile.npy"):
+    """Median speed per (5-minute slot of the day, sensor), (288, N), from the training period
+    only. Used to tell whether a sensor is currently far below its usual speed."""
+    if Path(cache).exists():
+        return np.load(cache)
+    df = load_speed_df()
+    n_train, _, _ = split_bounds(len(df))
+    v = df.values[: n_train + SEQ_IN - 1].astype(float)
+    v[v == 0] = np.nan
+    slot = np.arange(len(v)) % 288  # series starts at 00:00
+    prof = np.stack([np.nanmedian(v[slot == k], 0) for k in range(288)])
+    prof = np.where(np.isnan(prof), np.nanmedian(v, 0), prof)
+    np.save(cache, prof)
+    return prof
+
+
 def masked(y):
     """Boolean mask of valid (non-missing) readings."""
     return y != 0.0
