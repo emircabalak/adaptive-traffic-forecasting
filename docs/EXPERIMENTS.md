@@ -487,4 +487,27 @@ New `hybrid` policy: node-global's adapter first, then the rule on top, each wit
 of the detector. Variants: (a) rule up to 15 min; (b) rule with taper 6; (c) hybrid with (a);
 (d) hybrid with (b). Each at dur 9 and 24.
 Selection: both lengths positive and the constraint met; then the larger dur 9 gain.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | norm15 delta (9 / 24) |
+|---|---|---|---|
+| (a) rule up to 15 min | +0.169 | +0.751 | +0.0044 / +0.0045 |
+| (b) rule, taper 6 | +0.124 | +0.826 | +0.0018 / +0.0020 |
+| (c) hybrid with (a) | +0.331 | +0.901 | +0.0080 / +0.0082 |
+| (d) hybrid with (b) | +0.283 | +0.976 | +0.0056 / +0.0059 |
+
+(a) and (b) are the first configurations positive on both lengths within the constraint. The
+hybrids are better still but fail it: the normal-period costs of the adapter (about 0.0036) and
+the rule (0.002 to 0.0044) add up. Limiting the rule to 15 minutes also cuts the long-incident
+gain from +2.2 (E19, up to 30 min) to +0.75. The 30 minute pull pays in long incidents and
+costs in short ones; a fixed horizon can't serve both.
+
+### E21: pull further ahead the longer the slowdown has lasted
+Hypothesis: a severe slowdown that has already lasted a while is likely to last longer, so the
+pull horizon can grow with its age. Horizon k (1-based, in 5-minute steps) is pulled only once
+the sensor has been below r for at least f * k steps. Short incidents then never unlock the
+30 and 60 minute pulls, long ones do. This should keep E20a's short-incident gain and recover
+E19's long-incident gain.
+Change: Persist `age_horizon` f. Rule only (r 0.3, w 1, threshold 8, hold 72): f 1 up to 60
+min; f 2 up to 60 min; f 1 up to 30 min. Each at dur 9 and 24.
 Outcome: pending.
