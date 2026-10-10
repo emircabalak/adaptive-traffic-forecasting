@@ -249,7 +249,7 @@ class Persist(DetectOnly):
 
     def __init__(self, model, tod, scaler, device="cuda:0", mode="all", w=1.0, max_horizon=SEQ,
                  windows=(), flag_z=3.0, hold=12, anomaly_ratio=None, min_age=1, taper=None, age_horizon=None,
-                 band=None, kind="adwin", agg="mean", **det_params):
+                 short_h=0, band=None, kind="adwin", agg="mean", **det_params):
         super().__init__(kind, agg, **det_params)
         self.scaler, self.device, self.mode, self.w = scaler, device, mode, w
         self.hmask = (torch.arange(SEQ, device=device) < max_horizon).float()[:, None]
@@ -265,7 +265,7 @@ class Persist(DetectOnly):
         # min_age: a sensor must have been below anomaly_ratio for this many consecutive steps
         self.min_age, self.age = min_age, np.zeros(len(self.until), int)
         # age_horizon f: horizon k (1-based) is only pulled once the sensor has been slow for f * k steps
-        self.age_horizon = age_horizon
+        self.age_horizon, self.short_h = age_horizon, short_h  # horizons <= short_h skip the age rule
         self.now, self.updates = -1, []
 
     def step(self, now, labels, past):
@@ -303,7 +303,7 @@ class Persist(DetectOnly):
         if self.age_horizon:
             k = torch.arange(1, SEQ + 1, device=out.device)[:, None]
             age = torch.tensor(self.age, device=out.device)[None, :]
-            weight = weight * (age >= self.age_horizon * k).float()
+            weight = weight * ((age >= self.age_horizon * k) | (k <= self.short_h)).float()
         return out + self.w * weight * pull
 
 

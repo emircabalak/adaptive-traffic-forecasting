@@ -510,4 +510,25 @@ the sensor has been below r for at least f * k steps. Short incidents then never
 E19's long-incident gain.
 Change: Persist `age_horizon` f. Rule only (r 0.3, w 1, threshold 8, hold 72): f 1 up to 60
 min; f 2 up to 60 min; f 1 up to 30 min. Each at dur 9 and 24.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | dis15/30 at dur 9 | norm15 delta (9 / 24) |
+|---|---|---|---|---|
+| f 1, to 60 min | -0.804 | +0.192 | 13.24 / 24.12 | +0.0018 / +0.0020 |
+| f 2, to 60 min | -0.122 | +0.731 | 13.80 / 21.50 | +0.0006 / +0.0008 |
+| f 1, to 30 min | -0.804 | +1.679 | 13.24 / 24.12 | +0.0018 / +0.0020 |
+
+Worse than E20a on short incidents. Age-gating delays the pulls until later in the incident,
+and in a 45-minute incident a pull issued late (15 or 30 minutes ahead) runs into the release.
+The only pull that pays on short incidents is the early 15 minute one (E20a). Rejected as is.
+
+### E22: early 15 minute pull, longer horizons only for long-running slowdowns
+Hypothesis: keep E20a's pull for horizons up to 15 minutes from the start, and unlock longer
+horizons only once the slowdown has lasted f * k steps with a large f, so short incidents never
+reach them and long ones do.
+Change: Persist `short_h` (default 0): horizons <= short_h only need the usual min_age; longer
+ones need age >= f * k. Variants (rule, r 0.3, w 1): short_h 3 with f 2 or 3 up to 60 min;
+short_h 3 with f 2 up to 30 min. Each at dur 9 and 24.
+Risk to report: both f and the 45-minute / 2-hour scenario lengths come from the synthetic
+setup, so the exact thresholds may not transfer to real incidents.
 Outcome: pending.

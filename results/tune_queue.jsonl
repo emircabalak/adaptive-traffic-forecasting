@@ -95,3 +95,9 @@
 {"name":"E21-age1-H12","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"det":{"threshold":8},"age_horizon":1}
 {"name":"E21-age2-H12","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"det":{"threshold":8},"age_horizon":2}
 {"name":"E21-age1-H6","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"det":{"threshold":8},"age_horizon":1,"max_horizon":6}
+{"name":"E22-s3-f2-H12","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"short_h":3,"det":{"threshold":8},"age_horizon":2}
+{"name":"E22-s3-f3-H12","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"short_h":3,"det":{"threshold":8},"age_horizon":3}
+{"name":"E22-s3-f2-H6","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"short_h":3,"det":{"threshold":8},"age_horizon":2,"max_horizon":6}
+{"name":"E22-s3-f2-H12","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"short_h":3,"det":{"threshold":8},"age_horizon":2}
+{"name":"E22-s3-f3-H12","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"short_h":3,"det":{"threshold":8},"age_horizon":3}
+{"name":"E22-s3-f2-H6","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"short_h":3,"det":{"threshold":8},"age_horizon":2,"max_horizon":6}
