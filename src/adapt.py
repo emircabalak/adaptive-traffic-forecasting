@@ -248,8 +248,8 @@ class Persist(DetectOnly):
     flag_z in the last few steps, each for `hold` steps."""
 
     def __init__(self, model, tod, scaler, device="cuda:0", mode="all", w=1.0, max_horizon=SEQ,
-                 windows=(), flag_z=3.0, hold=12, anomaly_ratio=None, band=None, kind="adwin", agg="mean",
-                 **det_params):
+                 windows=(), flag_z=3.0, hold=12, anomaly_ratio=None, min_age=1, band=None, kind="adwin",
+                 agg="mean", **det_params):
         super().__init__(kind, agg, **det_params)
         self.scaler, self.device, self.mode, self.w = scaler, device, mode, w
         self.hmask = (torch.arange(SEQ, device=device) < max_horizon).float()[:, None]
@@ -260,10 +260,15 @@ class Persist(DetectOnly):
         self.anomaly_ratio = anomaly_ratio
         self.profile = data.speed_profile() if anomaly_ratio else None
         self.cur = None
+        # min_age: a sensor must have been below anomaly_ratio for this many consecutive steps
+        self.min_age, self.age = min_age, np.zeros(len(self.until), int)
         self.now, self.updates = -1, []
 
     def step(self, now, labels, past):
         self.now, self.cur = now, past[now]
+        if self.anomaly_ratio:
+            slow = (self.cur != 0) & (self.cur < self.anomaly_ratio * self.profile[now % self.profile.shape[0]])
+            self.age = np.where(slow, self.age + 1, np.where(self.cur == 0, self.age, 0))
         if super().step(now, labels, past) and self.mode == "flagged" and self.recent:
             hot = np.max(np.nan_to_num(np.stack(self.recent), nan=-np.inf), 0) > self.flag_z
             self.until[hot] = now + self.hold
@@ -281,7 +286,7 @@ class Persist(DetectOnly):
         a = self.until >= self.now
         if self.anomaly_ratio:
             usual = self.profile[self.now % self.profile.shape[0]]
-            a &= (self.cur != 0) & (self.cur < self.anomaly_ratio * usual)
+            a &= (self.cur != 0) & (self.cur < self.anomaly_ratio * usual) & (self.age >= self.min_age)
         return a
 
     def adjust(self, out, x):

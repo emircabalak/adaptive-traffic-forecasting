@@ -71,3 +71,13 @@
 {"name":"E18-w1-H6","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":1.0,"max_horizon":6}
 {"name":"E18-w0.5-H12","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":0.5}
 {"name":"E18-w1-H12","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.6,"det":{"threshold":8},"w":1.0}
+{"name":"E19-r0.3-H6","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"det":{"threshold":8},"w":1.0,"max_horizon":6}
+{"name":"E19-r0.3-H6-age3","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"det":{"threshold":8},"w":1.0,"max_horizon":6,"min_age":3}
+{"name":"E19-r0.3-w0.7-H6","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"det":{"threshold":8},"w":0.7,"max_horizon":6}
+{"name":"E19-r0.3-H12-age3","dur":9,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"det":{"threshold":8},"w":1.0,"min_age":3}
+{"name":"E19-node-anom0.3-local3","dur":9,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.3,"local_z":3}
+{"name":"E19-r0.3-H6","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"det":{"threshold":8},"w":1.0,"max_horizon":6}
+{"name":"E19-r0.3-H6-age3","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"det":{"threshold":8},"w":1.0,"max_horizon":6,"min_age":3}
+{"name":"E19-r0.3-w0.7-H6","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"det":{"threshold":8},"w":0.7,"max_horizon":6}
+{"name":"E19-r0.3-H12-age3","dur":24,"policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"det":{"threshold":8},"w":1.0,"min_age":3}
+{"name":"E19-node-anom0.3-local3","dur":24,"policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8},"anomaly_ratio":0.3,"local_z":3}

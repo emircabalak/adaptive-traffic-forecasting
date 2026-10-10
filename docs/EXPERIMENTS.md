@@ -433,4 +433,32 @@ this first version only varies the weight w and the horizon cut-off.
 Change: Persist mode "flagged" gets `anomaly_ratio`: a flagged sensor is only pulled while below
 r times its usual speed. Variants (threshold 8, hold 72 steps, r 0.6): w 1.0 up to 30 min;
 w 0.5 all horizons; w 1.0 all horizons. Each at dur 9 and 24.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | norm15 delta (9 / 24) |
+|---|---|---|---|
+| w 1, up to 30 min | -0.354 | +2.162 | +0.0208 / +0.0189 |
+| w 0.5, all horizons | -1.326 | +1.479 | +0.0053 / +0.0052 |
+| w 1, all horizons | -3.250 | +2.414 | +0.0208 / +0.0189 |
+
+Large long-incident gains, losses on short incidents, and the constraint still fails. Diagnosis
+(w 1 up to 30 min, dur 9, seed 100, 15 minute horizon): every forecast the rule changed in the
+normal period was issued while that sensor really was below 0.6 of its usual speed, i.e. during
+real, unlabelled slowdowns in the data. Where the slowdown lasted to the target time (2724 cells)
+the rule helped by 0.75 mph per cell; where it cleared within 15 minutes (1317 cells) it hurt by
+9.9 mph per cell. Graph WaveNet knows that ordinary congestion clears, persistence doesn't, and
+the clearing cases dominate. So the normal-period "damage" is the rule misjudging real
+congestion, not noise.
+
+### E19: only act on severe, sustained slowdowns
+Hypothesis: ordinary congestion sits around 0.4 to 0.6 of the usual speed and often clears
+quickly; incidents are deeper (the spec's synthetic one is 0.15, the real PeMS04 example fell to
+0.22) and last. Pulling only below r = 0.3, and only after a sensor has been that slow for
+min_age consecutive steps, should keep the long-incident gain and stop hurting both the normal
+period and short incidents. Risk to report: r = 0.3 sits close to the synthetic incident's
+depth, so part of any gain may be specific to the synthetic scenario; the mined real incidents
+are the check for that.
+Change: Persist gets `min_age`. Variants (flagged, threshold 8, hold 72): r 0.3 w 1 up to 30
+min; + min_age 3; r 0.3 w 0.7 up to 30 min; r 0.3 w 1 all horizons + min_age 3; and the learned
+adapter (node-global) with anomaly_ratio 0.3 and local_z 3. Each at dur 9 and 24.
 Outcome: pending.
