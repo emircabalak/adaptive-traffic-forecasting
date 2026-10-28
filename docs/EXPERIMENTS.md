@@ -531,4 +531,25 @@ ones need age >= f * k. Variants (rule, r 0.3, w 1): short_h 3 with f 2 or 3 up 
 short_h 3 with f 2 up to 30 min. Each at dur 9 and 24.
 Risk to report: both f and the 45-minute / 2-hour scenario lengths come from the synthetic
 setup, so the exact thresholds may not transfer to real incidents.
+Outcome:
+
+| config | dur 9 gain | dur 24 gain | dis15/30/60 at dur 24 | norm15 delta (9 / 24) |
+|---|---|---|---|---|
+| short_h 3, f 2, to 60 min | +0.169 | +0.872 | 10.08 / 23.09 / 31.74 | +0.0044 / +0.0045 |
+| short_h 3, f 3, to 60 min | +0.169 | +0.301 | 10.08 / 25.33 / 31.21 | +0.0044 / +0.0045 |
+| short_h 3, f 2, to 30 min | +0.169 | +1.049 | 10.08 / 23.09 / 31.21 | +0.0044 / +0.0045 |
+
+As intended, the longer pulls never fire in 45-minute incidents (dur 9 is identical to E20a).
+In 2 h incidents f 2 up to 30 min is the best (+1.049, up from +0.751). f 3 hurts at 30 min:
+the 30 minute pull then starts after 90 minutes, and most of those forecasts land after the
+2 h release. Same mechanism every time: any pull still active near the end of an incident
+costs more than it gains, so the best age thresholds depend on how long incidents last. They
+are tuned to the two synthetic lengths here, which the report has to say.
+Kept: "rule-severe" = Persist, flagged, threshold 8, hold 72, r 0.3, w 1, short_h 3,
+age_horizon 2, max_horizon 6. Not a parameter update, so it is reported as a rule-based
+alternative next to the learned adapter, not as a replacement for it.
+
+### Test run 2: the rule against the learned adapter
+rule-severe added to `results/test_variants.jsonl` and run on test (3 seeds, dur 9 and 24),
+alongside the existing test results.
 Outcome: pending.

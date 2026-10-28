@@ -6,3 +6,4 @@
 {"name":"node-strong","policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"det":{"threshold":20}}
 {"name":"node-safe","policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":12,"local_z":3,"gate":0.25,"det":{"threshold":16}}
 {"name":"node-global","policy":"node","max_horizon":6,"decay":0.7,"n_windows":3,"active_steps":6,"det":{"threshold":8}}
+{"name":"rule-severe","policy":"persist","mode":"flagged","hold":72,"anomaly_ratio":0.3,"w":1.0,"short_h":3,"age_horizon":2,"max_horizon":6,"det":{"threshold":8}}
