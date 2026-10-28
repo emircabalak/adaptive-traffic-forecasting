@@ -552,4 +552,20 @@ alternative next to the learned adapter, not as a replacement for it.
 ### Test run 2: the rule against the learned adapter
 rule-severe added to `results/test_variants.jsonl` and run on test (3 seeds, dur 9 and 24),
 alongside the existing test results.
-Outcome: pending.
+Outcome (test; gain = static disrupted MAE minus variant, mean over 15/30/60 min, +- std over
+seeds):
+
+| variant | 45 min gain | 2 h gain | dis15 at 45 min / 2 h | norm15 delta |
+|---|---|---|---|---|
+| static | 0 | 0 | 13.248 / 12.065 | 0 |
+| node-global (learned adapter) | +0.185 +- 0.047 | +0.267 +- 0.068 | 12.996 / 11.708 | +0.0036 |
+| rule-severe | +0.113 +- 0.031 | +0.850 +- 0.153 | 12.889 / 10.142 | +0.0036 |
+
+The rule holds up on test (validation: +0.169 / +1.049) and is the best method for long
+incidents: the 15 minute error in 2 h incidents drops by 16 % (12.07 -> 10.14 mph). The learned
+adapter stays best on the spec's 45-minute incidents. They are complementary, but the hybrid
+failed the normal-period constraint on validation (E20), so no combined method is claimed.
+Per incident (seed 0, 15 min, incident sensors): the rule's median gain is 0.02 mph for 45-minute
+incidents and 0.83 for 2 h ones, with best cases of 6.2 and 6.0 mph.
+Figures: `results/fig_mae_bars_dur9.png`, `..._dur24.png`, best cases
+`fig_incident_seed0_dur9_6.png` and `..._dur24_5.png`, typical case `..._dur24_9.png`.

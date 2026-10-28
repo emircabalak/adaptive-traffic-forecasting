@@ -1,7 +1,8 @@
 """Figures from run_experiments.py outputs.
-Usage: python scripts/plots.py [--seed 0] [--event9 6] [--event24 12]
-The default incidents (seed 0) are the ones where ours gains most at 15 min, picked to show the
-mechanism; they are best cases, not typical ones (the bar charts show the averages).
+Usage: python scripts/plots.py [--seed 0] [--event9 6] [--event24 5] [--typical24 9]
+The default incidents (seed 0): event9 and event24 are where the methods gain most at 15 min,
+picked to show the mechanism (best cases); typical24 is the incident closest to the rule's
+median gain. The bar charts show the averages.
 Writes results/fig_mae_bars_dur{9,24}.png and results/fig_incident_seed{S}_dur{D}_{K}.png."""
 import argparse
 import ast
@@ -21,8 +22,10 @@ import incidents  # noqa: E402
 
 RES = ROOT / "results"
 # fixed categorical order (dataviz reference palette, validated for light mode); ours = node-global
-COLORS = {"static": "#2a78d6", "naive": "#eb6834", "head": "#1baf7a", "node-global": "#eda100"}
-LABELS = {"static": "static (a)", "naive": "naive (b)", "head": "head only (spec c)", "node-global": "ours: node adapter"}
+COLORS = {"static": "#2a78d6", "naive": "#eb6834", "head": "#1baf7a", "node-global": "#eda100",
+          "rule-severe": "#e87ba4"}
+LABELS = {"static": "static (a)", "naive": "naive (b)", "head": "head only (spec c)",
+          "node-global": "ours: node adapter", "rule-severe": "severe-slowdown rule"}
 INK, MUTED = "#1f1f1e", "#6b6a64"
 
 
@@ -62,7 +65,7 @@ def bars(dur):
     plt.close(fig)
 
 
-def incident(seed, dur, k):
+def incident(seed, dur, k, note="a best case, see the averages in the bar charts"):
     ev = pd.read_csv(RES / f"incidents_seed{seed}_dur{dur}.csv", converters={"sensors": ast.literal_eval})
     e = ev.iloc[k]
     df = data.load_speed_df()
@@ -74,12 +77,12 @@ def incident(seed, dur, k):
     for ax, (col, hz) in zip(axes, [(1, "15 min"), (2, "30 min")]):
         s = e.sensors[0]
         ax.plot(df.index[t], np.where(speed[t, s] == 0, np.nan, speed[t, s]), color=INK, lw=2, label="actual")
-        for v in ["static", "node-global"]:
+        for v in ["static", "node-global", "rule-severe"]:
             z = np.load(RES / "replays" / f"seed{seed}_dur{dur}_{v}.npz")
             step = [0, 3, 6][col]  # saved horizons are 1, 3, 6, 12 steps ahead
             p = z["preds"][:, col]  # row i issued at t0 + i, target t0 + i + step
             ax.plot(df.index[t], p[t - step - t0, s], color=COLORS[v], lw=2, label=f"{LABELS[v]}, {hz} ahead")
-            if v == "node-global":
+            if v == "rule-severe":
                 for al in z["alarms"]:
                     if lo <= al < hi:
                         ax.axvline(df.index[int(al)], color=COLORS[v], ls=":", lw=1)
@@ -87,7 +90,7 @@ def incident(seed, dur, k):
         ax.set_ylabel(f"speed at sensor {s} (mph)", color=INK)
         ax.legend(frameon=False, fontsize=8, loc="lower left")
         style(ax)
-    axes[0].set_title(f"Seed {seed}, incident {k} (a best case, see the averages in the bar charts): "
+    axes[0].set_title(f"Seed {seed}, incident {k} ({note}): "
                       f"forecasts at their target time, shaded = blockage, dotted = alarms", color=INK, fontsize=9)
     fig.tight_layout()
     fig.savefig(RES / f"fig_incident_seed{seed}_dur{dur}_{k}.png", dpi=150)
@@ -98,9 +101,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--event9", type=int, default=6)
-    ap.add_argument("--event24", type=int, default=12)
+    ap.add_argument("--event24", type=int, default=5)
+    ap.add_argument("--typical24", type=int, default=9, help="incident closest to the median gain")
     a = ap.parse_args()
     for dur, k in ((9, a.event9), (24, a.event24)):
         bars(dur)
         incident(a.seed, dur, k)
+    incident(a.seed, 24, a.typical24, note="a typical case: median gain of the rule")
     print("figures written to", RES)

@@ -10,10 +10,11 @@ point to. An earlier draft of the spec contained made-up numbers, and none of th
 
 ## Where we left off (update at the end of every session)
 
-2026-10-10. Method settled and evaluated on test. "Ours" is the node adapter (node-global in
-`results/test_variants.jsonl`); test results and the decision are at the end of
-`docs/EXPERIMENTS.md`, the team-facing summary is `docs/TEAM_UPDATE.md`, figures in `results/`.
-Open: mined real incidents as a scenario, dashboard.
+2026-10-29. Two methods evaluated on test: the learned node adapter (best on 45-minute
+incidents) and the severe-slowdown rule (best on 2 h incidents). Details at the end of
+`docs/EXPERIMENTS.md`, team summary in `docs/TEAM_UPDATE.md`, figures in `results/`.
+Open: a hybrid that passes the normal-period constraint, mined real incidents as a scenario
+(the best check of whether the rule's thresholds transfer), dashboard.
 
 To continue after a break or a shutdown:
 1. Tuning queue: `powershell -ExecutionPolicy Bypass -File scripts\start_tuning.ps1`. It runs
@@ -294,3 +295,6 @@ Append only, newest last.
   decay 0.7, 3 training windows, 6 continuous update steps after an alarm, nbrtop3 PageHinkley
   detector at threshold 8. Chosen on validation (EXPERIMENTS E0 to E15), confirmed on test:
   disrupted gain +0.185 mph (45 min) and +0.267 (2 h), normal-period delta +0.0036.
+- 2026-10-29: Added the severe-slowdown rule (Persist in src/adapt.py, config "rule-severe") as a
+  rule-based alternative to the learned adapter. Test: +0.113 (45 min) and +0.850 (2 h), normal
+  delta +0.0036. Reported next to the adapter, not instead of it.
