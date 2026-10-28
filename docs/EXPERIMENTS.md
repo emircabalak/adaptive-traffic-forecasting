@@ -569,3 +569,67 @@ Per incident (seed 0, 15 min, incident sensors): the rule's median gain is 0.02 
 incidents and 0.83 for 2 h ones, with best cases of 6.2 and 6.0 mph.
 Figures: `results/fig_mae_bars_dur9.png`, `..._dur24.png`, best cases
 `fig_incident_seed0_dur9_6.png` and `..._dur24_5.png`, typical case `..._dur24_9.png`.
+
+## Round 3: a learned version of the rule
+
+Saved state before this round: git tag `v1-adapter-and-rule` (code, docs, test results) and
+`results/snapshots/*_v1.csv`. NodeAdapt and Persist are left unchanged; the new method is a new
+class, so the v1 results stay reproducible.
+
+### E23: learned persistence blend
+Hypothesis: the rule's all-or-nothing pull (w = 1 below 30 % of the usual speed, 30 minute pulls
+after an hour) is a hand-set version of something that can be learned: how much to trust "the
+slowdown persists" as a function of how deep the slowdown is, how long it has lasted and how far
+ahead the forecast looks. A small model learned from real slowdowns should match the rule on
+long incidents, hurt less at the release, and not depend on thresholds picked for the synthetic
+incidents.
+Design (`LearnedBlend` in src/adapt.py): for each sensor and horizon k the forecast becomes
+y' = y + w * (last - y), with w = sigmoid(theta . phi) and
+phi = [1, depth, log-age, k/12, depth * k/12, log-age * k/12, depth * log-age], where depth =
+1 - speed / usual speed (clipped to 0..1), and age = consecutive steps below 0.6 of the usual
+speed. w is applied only while a sensor is below 0.6 of its usual speed; elsewhere the static
+forecast is untouched. theta (7 numbers) is learned with online gradient steps on the labels as
+they are released (leak free, same buffer as everything else), using masked L1 error, on every
+cell whose sensor was below 0.6 of its usual speed when the forecast was issued.
+Warm start: theta is first learned by streaming once through the training period, which has
+real slowdowns but no synthetic incidents, so the starting point is learned from real traffic
+only (`scripts/pretrain_blend.py`, resumable, `results/blend_theta.json`). Caveat: Graph WaveNet
+was trained on that period, so its errors there are somewhat smaller than out of sample.
+Variants on validation: (a) pretrained theta, frozen; (b) pretrained + online updates;
+(c) (b) applied only after a detector alarm (flagged sensors, as in the rule). Dur 9 and 24.
+Success: beats rule-severe on dur 24 or matches it while doing better on dur 9, within the
+normal-period limit.
+Outcome: stopped before the validation runs, because the pretraining already answers the
+question. Learned on the training period, theta goes negative on every term and the blend
+weight is 0.00 for every depth, age and horizon checked (depth 0.5 and 0.85, age 1 to 24 steps,
+horizon 1 to 12). Learned on the validation period instead (`--period val`, out of sample for
+Graph WaveNet, real traffic only) it is about 0.01 everywhere. Real slowdowns teach "don't
+pull".
+
+### E23b: does persistence ever beat Graph WaveNet on real slowdowns?
+Direct check on clean data (no synthetic incidents): cells where a sensor reads below 0.3 of its
+usual speed, split by how long it has been that slow, Graph WaveNet's static forecast against
+the last observed speed.
+
+| period | horizon | slow 1-3 steps | slow 3-12 steps | slow 12+ steps (1 h+) |
+|---|---|---|---|---|
+| val | 15 min | GWN 7.12 vs persistence 9.25 | 6.15 vs 7.55 | 4.81 vs 6.03 |
+| val | 30 min | 9.54 vs 13.98 | 8.88 vs 13.92 | 7.97 vs 10.69 |
+| test | 15 min | 7.82 vs 10.21 | 6.16 vs 7.60 | 4.68 vs 6.38 |
+| test | 30 min | 9.91 vs 15.05 | 9.14 vs 13.72 | 7.12 vs 10.72 |
+
+About 1 % of all cells are this slow (8462 on validation, 13905 on test). Graph WaveNet wins in
+every bucket, including real slowdowns that have lasted over an hour.
+
+Conclusion, and it changes how the round 2 results must be read: the persistence-style gains
+(rule-severe, and part of the node adapter's) come from the synthetic incidents, which behave
+unlike real slowdowns in METR-LA. A synthetic incident scales five sensors to 0.15x instantly,
+at a random time, with no build-up on neighbouring sensors and no recurring daily pattern, and
+Graph WaveNet has never seen anything like it, so it predicts a quick recovery. On real deep
+slowdowns, even long ones, it is already better than persistence (15 minute MAE 4.7 on
+slowdowns that have lasted an hour, against 12 to 13 on synthetic incidents). The learned blend
+learned the right thing for real traffic, which means zero gain on synthetic incidents.
+For the report: rule-severe is a result about the synthetic scenario, not evidence that holding
+the last speed helps in real incidents. The honest test of online adaptation is the real-event
+scenario (spec scenario 2, mined events).
+LearnedBlend is kept in the code but not used. Nothing from v1 changes.

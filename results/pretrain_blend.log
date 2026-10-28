@@ -1,0 +1,12 @@
+pretraining theta on steps 11..23972
+C:\Users\emirc\OneDrive\Desktop\Adaptive Data\src\drift.py:67: RuntimeWarning: Mean of empty slice
+  return np.nanmean(np.where(np.isinf(top), np.nan, top), -1)
+done until 3010: theta [-4.083, -1.059, -0.616, -0.799, -0.854, -0.414, -0.576], recent loss 0.3595
+done until 6010: theta [-4.505, -1.391, -1.024, -1.148, -1.242, -0.651, -0.825], recent loss 0.3519
+done until 9010: theta [-5.037, -1.883, -1.213, -1.461, -1.486, -0.658, -0.968], recent loss 0.2989
+done until 12010: theta [-5.873, -2.639, -1.677, -2.059, -1.972, -0.856, -1.336], recent loss 0.3721
+done until 15010: theta [-6.394, -3.083, -2.107, -2.466, -2.337, -1.138, -1.684], recent loss 0.3661
+done until 18010: theta [-6.743, -3.425, -2.434, -2.61, -2.481, -1.287, -1.979], recent loss 0.3424
+done until 21010: theta [-6.622, -3.273, -2.146, -2.187, -2.04, -0.626, -1.701], recent loss 0.3470
+done until 23972: theta [-6.68, -3.47, -2.299, -2.571, -2.553, -1.042, -1.952], recent loss 0.3492
+pretraining finished

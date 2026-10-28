@@ -11,7 +11,9 @@ Training windows come only from `past` (the series up to now). A target later th
 simply not in `past`, so it is padded with 0.0, which every loss treats as missing. The model
 stays in eval() mode throughout, so BatchNorm statistics and dropout never change.
 """
+import json
 import time
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -307,6 +309,102 @@ class Persist(DetectOnly):
         return out + self.w * weight * pull
 
 
+THETA_FILE = Path(__file__).resolve().parents[1] / "results" / "blend_theta.json"
+
+
+class LearnedBlend(DetectOnly):
+    """Learned version of the persistence pull (EXPERIMENTS E23).
+    y' = y + w * (last - y) per sensor and horizon, w = sigmoid(theta . phi) with
+    phi = [1, depth, log-age, k/12, depth*k/12, log-age*k/12, depth*log-age]: depth = 1 - speed/usual
+    (clipped to 0..1), age = consecutive steps below slow_ratio of the usual speed, k = horizon.
+    Applied only while a sensor is below slow_ratio of its usual speed (and, with need_alarm,
+    after a detector alarm flagged it). theta is learned online from released labels on the cells
+    where the sensor was slow when the forecast was issued; only theta changes, the network
+    stays frozen."""
+
+    def __init__(self, model, tod, scaler, device="cuda:0", theta="pretrained", lr=0.01, learn=True,
+                 need_alarm=False, hold=72, flag_z=3.0, slow_ratio=0.6, band=None, kind="adwin", agg="mean",
+                 **det_params):
+        super().__init__(kind, agg, **det_params)
+        self.scaler, self.device, self.learn = scaler, device, learn
+        self.need_alarm, self.hold, self.flag_z, self.slow_ratio = need_alarm, hold, flag_z, slow_ratio
+        self.profile = data.speed_profile()
+        n = model.nodevec1.shape[0]
+        init = [-3.0, 0, 0, 0, 0, 0, 0]  # w about 0.05 everywhere until something is learned
+        if theta == "pretrained":
+            init = json.loads(THETA_FILE.read_text())["theta"]
+        elif theta is not None:
+            init = theta
+        self.theta = torch.tensor(init, dtype=torch.float32, device=device, requires_grad=True)
+        self.opt = torch.optim.Adam([self.theta], lr=lr)
+        self.age, self.depth = np.zeros(n, int), np.zeros(n)
+        self.slow = np.zeros(n, bool)
+        self.until = np.full(n, -1)
+        self.hist = {}  # issue time -> (base, last, ok, phi, slow) as tensors
+        self.now, self.updates = -1, []
+        self.k = (torch.arange(1, SEQ + 1, device=device, dtype=torch.float32) / SEQ)[:, None]
+
+    def phi(self):
+        d = torch.tensor(self.depth, dtype=torch.float32, device=self.device)[None, :].expand(SEQ, -1)
+        la = torch.tensor(np.log1p(self.age) / np.log1p(144), dtype=torch.float32, device=self.device)[None, :]
+        la = la.expand(SEQ, -1)
+        k = self.k.expand_as(d)
+        return torch.stack([torch.ones_like(d), d, la, k, d * k, la * k, d * la], -1)  # (12, N, 7)
+
+    def step(self, now, labels, past):
+        self.now = now
+        cur = past[now]
+        usual = self.profile[now % self.profile.shape[0]]
+        seen = cur != 0  # missing readings keep the previous state
+        slow = seen & (cur < self.slow_ratio * usual)
+        self.age = np.where(slow, self.age + 1, np.where(seen, 0, self.age))
+        self.depth = np.where(seen, np.clip(1 - cur / usual, 0, 1), self.depth)
+        self.slow = np.where(seen, slow, self.slow)
+        if super().step(now, labels, past) and self.need_alarm and self.recent:
+            hot = np.max(np.nan_to_num(np.stack(self.recent), nan=-np.inf), 0) > self.flag_z
+            self.until[hot] = now + self.hold
+        if self.learn and labels:
+            self._learn(labels)
+        for s in [s for s in self.hist if s < now - SEQ]:
+            del self.hist[s]
+
+    def _learn(self, labels):
+        t0 = time.perf_counter()
+        rows = [(self.hist[s], k, true) for s, k, _, true in labels if s in self.hist]
+        if not rows:
+            return
+        mean, std = self.scaler
+        base = torch.stack([h[0][k] for h, k, _ in rows])            # (L, N)
+        last = torch.stack([h[1] for h, _, _ in rows])
+        m = torch.stack([h[2] & h[4] for h, _, _ in rows])            # usable: last seen and slow at issue
+        phi = torch.stack([h[3][k] for h, k, _ in rows])              # (L, N, 7)
+        y = torch.tensor(np.stack([t for _, _, t in rows]), dtype=torch.float32, device=self.device)
+        m = m & (y != 0)
+        if not m.any():
+            return
+        yn = (y - mean) / std
+        w = torch.sigmoid(phi @ self.theta)
+        loss = (base + w * (last - base) - yn).abs()[m].mean()
+        self.opt.zero_grad()
+        loss.backward()
+        self.opt.step()
+        self.updates.append((self.now, time.perf_counter() - t0, loss.item()))
+
+    def adjust(self, out, x):
+        last, ok = last_valid(x, self.scaler)
+        last, ok = last[0], ok[0]
+        phi = self.phi()
+        slow_t = torch.tensor(self.slow, device=self.device)
+        self.hist[self.now] = (out[0].detach(), last, ok, phi, slow_t)
+        active = self.slow & ((self.until >= self.now) if self.need_alarm else True)
+        if not active.any():
+            return out
+        a = torch.tensor(active, dtype=torch.float32, device=self.device)
+        with torch.no_grad():
+            w = torch.sigmoid(phi @ self.theta) * a * ok.float()
+        return out + (w * (last - out[0]))[None]
+
+
 class Hybrid:
     """Learned per-sensor adapter (NodeAdapt) with the severe-slowdown rule (Persist) on top.
     Both see the same labels; each keeps its own copy of the detector."""
@@ -333,6 +431,7 @@ POLICIES = {
     "node": NodeAdapt,
     "persist": Persist,
     "hybrid": Hybrid,
+    "blend": LearnedBlend,
     "naive": lambda model, tod, scaler, device, band=None, **det: NaiveFT(model, tod, scaler, device),
 }
 

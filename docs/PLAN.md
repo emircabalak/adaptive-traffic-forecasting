@@ -298,3 +298,6 @@ Append only, newest last.
 - 2026-10-29: Added the severe-slowdown rule (Persist in src/adapt.py, config "rule-severe") as a
   rule-based alternative to the learned adapter. Test: +0.113 (45 min) and +0.850 (2 h), normal
   delta +0.0036. Reported next to the adapter, not instead of it.
+- 2026-10-29: E23/E23b: on real slowdowns (clean data, below 0.3 of the usual speed, any duration)
+  Graph WaveNet beats persistence on both validation and test. Persistence-style gains on
+  synthetic incidents don't transfer; the real-event scenario becomes the priority.
