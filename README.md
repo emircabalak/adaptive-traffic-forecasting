@@ -40,6 +40,9 @@ third_party/Graph-WaveNet   the authors' code, as a submodule, unmodified
 
 ## Setup
 
+The trained Graph WaveNet weights are included (`checkpoints/metr_exp1_best_2.74.pth`, 1.3 MB), so
+retraining is optional.
+
 ```
 git clone --recurse-submodules https://github.com/emircabalak/adaptive-traffic-forecasting
 python -m venv .venv
@@ -48,15 +51,15 @@ python -m venv .venv
 ```
 
 Data: download `metr-la.h5` from the DCRNN Google Drive folder (linked in the Graph WaveNet
-README) into `data/`, and `adj_mx.pkl` plus `distances_la_2012.csv` from the DCRNN repository
+README) into `data/` (57 MB, not stored here), and `adj_mx.pkl` plus `distances_la_2012.csv` from the DCRNN repository
 into `data/sensor_graph/`. Then:
 
 ```
 python src/data.py
 python -c "import sys; sys.path.insert(0,'src'); import data; data.convert_for_pandas3()"
 python third_party/Graph-WaveNet/generate_training_data.py --output_dir=data/METR-LA --traffic_df_filename=data/metr-la-pd3.h5
-python scripts/train_resumable.py          # about 2 h on a laptop GPU, resumes after interruptions
-python scripts/eval_baseline.py
+python scripts/eval_baseline.py            # uses the trained checkpoint in checkpoints/
+python scripts/train_resumable.py          # only to retrain: about 2 h on a laptop GPU, resumes after interruptions
 python scripts/run_experiments.py          # all variants in results/test_variants.jsonl
 python scripts/plots.py
 ```
