@@ -45,7 +45,7 @@ def residual_stats(model, speed, tod, scaler, n_train, ckpt, cache=ROOT / "resul
     with np.errstate(all="ignore"):
         for k in range(drift.STEPS_PER_DAY):
             mu[k], sd[k] = np.nanmean(err[slot == k], 0), np.nanstd(err[slot == k], 0)
-    # ponytail: cells with no valid training reading fall back to the sensor's overall stats
+    # Cells with no valid training reading fall back to the sensor's overall stats
     mu = np.where(np.isnan(mu), np.nanmean(err, 0), mu)
     sd = np.maximum(np.where(np.isnan(sd), np.nanstd(err, 0), sd), 0.5)  # 0.5 mph floor
     np.savez(cache, mu=mu, sd=sd, ckpt=str(ckpt))

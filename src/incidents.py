@@ -84,7 +84,7 @@ def mine_slowdowns(df, min_drop=20.0, max_ratio=0.6, min_steps=3, smooth=3):
     v = df.where(df != 0)
     sm = v.rolling(smooth, center=True, min_periods=2).median()
     key = [df.index.dayofweek, df.index.hour * 12 + df.index.minute // 5]
-    # ponytail: median includes the day itself; with ~17 weeks per weekday one outlier barely moves it
+    # The median includes the day itself; with ~17 weeks per weekday one outlier barely moves it
     ref = v.groupby(key).transform("median")
     hit = ((ref - sm) >= min_drop) & (sm < max_ratio * ref)
     rows = []

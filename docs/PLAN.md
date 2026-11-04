@@ -8,7 +8,7 @@ bottom; don't delete old entries. Ideas, tuning notes and stretch work live in [
 We have no results yet. Every number in this repo has to come from a run whose log or CSV we can
 point to. An earlier draft of the spec contained made-up numbers, and none of them may come back.
 
-## Where we left off (update at the end of every session)
+## Where we left off (updated after each work day)
 
 2026-10-29. Two methods evaluated on test: the learned node adapter (best on 45-minute
 incidents) and the severe-slowdown rule (best on 2 h incidents). Details at the end of
@@ -50,7 +50,7 @@ Then put `metr-la.h5` in `data/` and run the commands in section 4, week 1.
 ## 1. Reference numbers
 
 Checked against the paper PDF (Wu et al., IJCAI 2019, arXiv 1906.00121, Table 2), METR-LA,
-Graph WaveNet. The numbers in the handover were from memory and turned out to be slightly off.
+Graph WaveNet. The numbers in the project brief were from memory and turned out to be slightly off.
 
 | Horizon | MAE | RMSE | MAPE |
 |---|---|---|---|

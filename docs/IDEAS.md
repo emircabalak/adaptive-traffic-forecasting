@@ -123,8 +123,8 @@ Append, newest last. Format: date, what we tried, outcome, next step.
   while curl with `--ssl-no-revoke` worked. If a download fails, try curl before anything else.
 - 2026-10-07: official train.py failed on PyTorch 2.11 (Conv1d given 4D input). Fixed from our side in
   `src/gwn.py` without touching upstream. Smoke run: 66.7 s/epoch. Full baseline training started.
-- 2026-10-07: the first full training run died silently after epoch 7. A process started from the
-  session (even with Start-Process) gets killed when the session closes. Long jobs now start
+- 2026-10-07: the first full training run died silently after epoch 7. A process started from a
+  terminal (even with Start-Process) gets killed when that terminal closes. Long jobs now start
   through WMI (`Invoke-CimMethod Win32_Process Create`), which detaches them. Training on the
   laptop also stops if the machine sleeps, so keep it plugged in with the lid open.
 - 2026-10-07: river ADWIN with its default clock=32 detected a 9-step error jump 23 steps late in
